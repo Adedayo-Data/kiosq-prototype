@@ -3,6 +3,8 @@ package com.example.kiosq.service;
 import com.example.kiosq.dto.*;
 import com.example.kiosq.model.*;
 import com.example.kiosq.repository.*;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,24 +20,43 @@ public class KiosqService {
     private final ProductRepository productRepository;
     private final EscrowOrderRepository escrowOrderRepository;
     private final CreditRecordRepository creditRecordRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public KiosqService(
         MerchantRepository merchantRepository,
         ProductRepository productRepository,
         EscrowOrderRepository escrowOrderRepository,
-        CreditRecordRepository creditRecordRepository
+        CreditRecordRepository creditRecordRepository,
+        PasswordEncoder passwordEncoder
     ) {
         this.merchantRepository = merchantRepository;
         this.productRepository = productRepository;
         this.escrowOrderRepository = escrowOrderRepository;
         this.creditRecordRepository = creditRecordRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    // Default Seed Merchant: Mama Tola Textiles
+    // Resolves merchant from authenticated JWT context or falls back to default seed merchant
+    @Transactional
+    public Merchant getCurrentMerchant() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getName() != null && !auth.getName().equals("anonymousUser")) {
+            return merchantRepository.findByPhone(auth.getName()).orElseGet(this::getOrCreateDefaultMerchant);
+        }
+        return getOrCreateDefaultMerchant();
+    }
+
     @Transactional
     public Merchant getOrCreateDefaultMerchant() {
         return merchantRepository.findByPhone("08012345678").orElseGet(() -> {
-            Merchant m = new Merchant("Chioma Adeleke", "08012345678", "tola@kiosq.africa", "Mama Tola Textiles", "Balogun Market, Lagos Island");
+            Merchant m = new Merchant(
+                "Chioma Adeleke",
+                "08012345678",
+                "tola@kiosq.africa",
+                passwordEncoder.encode("password123"),
+                "Mama Tola Textiles",
+                "Balogun Market, Lagos Island"
+            );
             m.setBankName("Access Bank");
             m.setAccountNumber("0123456789");
             m.setAccountName("Mama Tola Textiles");
@@ -43,10 +64,10 @@ public class KiosqService {
         });
     }
 
-    // 1. Create Product Listing
+    // 1. Create Product Listing (Merchant only)
     @Transactional
     public Product createProduct(CreateProductRequest req) {
-        Merchant merchant = getOrCreateDefaultMerchant();
+        Merchant merchant = getCurrentMerchant();
 
         Product product = new Product();
         String slug = req.title().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "") + "-" + UUID.randomUUID().toString().substring(0, 5);
@@ -97,7 +118,6 @@ public class KiosqService {
         BigDecimal floor = p.getFloorPrice();
         BigDecimal asking = p.getAskingPrice();
 
-        // Rule 1: Offer meets or exceeds asking price
         if (offer.compareTo(asking) >= 0) {
             return new NegotiationResponse(
                 "ACCEPTED",
@@ -108,7 +128,6 @@ public class KiosqService {
             );
         }
 
-        // Rule 2: Offer meets or exceeds minimum floor price
         if (offer.compareTo(floor) >= 0) {
             return new NegotiationResponse(
                 "ACCEPTED",
@@ -119,7 +138,6 @@ public class KiosqService {
             );
         }
 
-        // Rule 3: Offer is below floor price -> AI Counter-offers with Floor
         BigDecimal counter = floor.add(asking.subtract(floor).divide(BigDecimal.valueOf(2)));
         if (counter.compareTo(floor) < 0) {
             counter = floor;
@@ -150,7 +168,6 @@ public class KiosqService {
         order.setBuyerPhone(req.buyerPhone());
         order.setDeliveryAddress(req.deliveryAddress());
 
-        // Generate 4-Digit Doorstep Delivery PIN (e.g. 7429)
         String pin = String.format("%04d", new Random().nextInt(10000));
         order.setDeliveryPin(pin);
         order.setStatus(EscrowOrder.EscrowStatus.FUNDS_HELD_IN_ESCROW);
@@ -174,7 +191,6 @@ public class KiosqService {
         order.setReleasedAt(LocalDateTime.now());
         escrowOrderRepository.save(order);
 
-        // Turn completed transaction into verified financial record for credit readiness
         String auditHash = generateAuditHash(order);
         CreditRecord record = new CreditRecord(
             order.getMerchant(),
@@ -196,10 +212,10 @@ public class KiosqService {
         return response;
     }
 
-    // 6. Seller Dashboard Metrics
+    // 6. Seller Dashboard Metrics (Authenticated Merchant)
     @Transactional(readOnly = true)
     public Map<String, Object> getSellerMetrics() {
-        Merchant m = getOrCreateDefaultMerchant();
+        Merchant m = getCurrentMerchant();
         List<EscrowOrder> orders = escrowOrderRepository.findByMerchantIdOrderByCreatedAtDesc(m.getId());
 
         BigDecimal availablePayout = BigDecimal.ZERO;
@@ -217,6 +233,7 @@ public class KiosqService {
 
         Map<String, Object> metrics = new LinkedHashMap<>();
         metrics.put("merchantName", m.getBusinessName());
+        metrics.put("phone", m.getPhone());
         metrics.put("availablePayout", availablePayout);
         metrics.put("lockedInEscrow", lockedInEscrow);
         metrics.put("activeOrdersCount", activeOrders);
@@ -224,10 +241,10 @@ public class KiosqService {
         return metrics;
     }
 
-    // 7. Verified Financial Credit Ledger (Financial Passport)
+    // 7. Verified Financial Credit Ledger
     @Transactional(readOnly = true)
     public Map<String, Object> getCreditLedger() {
-        Merchant m = getOrCreateDefaultMerchant();
+        Merchant m = getCurrentMerchant();
         List<CreditRecord> records = creditRecordRepository.findByMerchantIdOrderByRecordedAtDesc(m.getId());
 
         BigDecimal totalVerifiedGmv = records.stream()

@@ -20,6 +20,9 @@ public class Merchant {
     private String email;
 
     @Column(nullable = false)
+    private String password; // BCrypt hashed password
+
+    @Column(nullable = false)
     private String businessName;
 
     private String marketLocation; // e.g. Balogun Market, Lagos Island
@@ -34,10 +37,11 @@ public class Merchant {
 
     public Merchant() {}
 
-    public Merchant(String fullName, String phone, String email, String businessName, String marketLocation) {
+    public Merchant(String fullName, String phone, String email, String password, String businessName, String marketLocation) {
         this.fullName = fullName;
         this.phone = phone;
         this.email = email;
+        this.password = password;
         this.businessName = businessName;
         this.marketLocation = marketLocation;
     }
@@ -53,6 +57,9 @@ public class Merchant {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
     public String getBusinessName() { return businessName; }
     public void setBusinessName(String businessName) { this.businessName = businessName; }
