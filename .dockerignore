@@ -1,0 +1,9 @@
+frontend/
+target/
+backend/target/
+.git/
+.mvn/
+backend/.mvn/
+*.md
+.idea/
+*.iml

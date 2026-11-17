@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: kiosq-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /api/v1/products/ankara-wax
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kiosq-postgres
+          property: connectionString
+
+databases:
+  - name: kiosq-postgres
+    plan: free
+    region: oregon
+    databaseName: kiosq_db
+    user: kiosq_user
