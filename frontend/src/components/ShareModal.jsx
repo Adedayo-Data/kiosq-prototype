@@ -1,115 +1,120 @@
 import { useState, useMemo, useEffect } from "react";
 import { useToast } from "../context/ToastContext";
+import { stampProductImage, generateCollageCover } from "../utils/imageBranding";
 
 /**
- * Helper to fetch an image URL and convert to a File object for the native Web Share API
+ * ShareModal handles sharing to WhatsApp Status:
+ * - Single item: Stamped product photo + AI caption (price hidden) + "Pay with zero fear" CTA
+ * - Bulk items: 4-Photo Lookbook Collage Cover (Slide #1) + all branded photos + master link
  */
-async function fetchImageFile(imageUrl, fileName = "product.jpg") {
-  try {
-    const res = await fetch(imageUrl, { mode: "cors" });
-    if (!res.ok) throw new Error("Image fetch failed");
-    const blob = await res.blob();
-    const mimeType = blob.type || "image/jpeg";
-    const extension = mimeType.includes("png") ? "png" : "jpg";
-    return new File([blob], `${fileName}.${extension}`, { type: mimeType });
-  } catch (err) {
-    console.warn("Could not download image blob for native share:", err);
-    return null;
-  }
-}
-
-/**
- * ShareModal handles sharing product images and captions to WhatsApp Status.
- * Conforms strictly to:
- * - NO price included in the caption (forces buyers to click the link to see price / haggle)
- * - Native photo sharing via Web Share API (attaches real image file + caption to WhatsApp Status)
- * - 1-by-1 Status posting flow for bulk products
- * - Download photo + copy caption fallback for desktop
- */
-export default function ShareModal({ isOpen, onClose, items = [], businessName = "My Kiosq" }) {
+export default function ShareModal({ isOpen, onClose, items = [], businessName = "Mama Tola Textiles" }) {
   const { addToast } = useToast();
-  const [activeStep, setActiveStep] = useState(0); // For stepping through multiple items (1 by 1)
   const [isSharing, setIsSharing] = useState(false);
   const [copiedType, setCopiedType] = useState(null);
 
-  // Reset active step when items change
-  useEffect(() => {
-    setActiveStep(0);
-  }, [items]);
+  // Formatted merchant catalog slug / link
+  const merchantSlug = useMemo(() => {
+    return businessName.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  }, [businessName]);
 
-  const currentItem = items[activeStep] || items[0];
+  // Generate WhatsApp-ready caption
+  const defaultText = useMemo(() => {
+    if (!items || items.length === 0) return "";
 
-  // Build clean caption WITHOUT price
-  const generateCaption = (item) => {
-    if (!item) return "";
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const productUrl = `${origin}/product/${item.slug || item.id}`;
+    if (items.length === 1) {
+      const item = items[0];
+      const productUrl = `https://usekiosq.shop/product/${item.slug || item.id}`;
+      const caption = item.whatsappCaption
+        ? item.whatsappCaption
+            .replace(/₦[\d,]+/g, "")
+            .replace(/👉[\s\S]*$/, "")
+            .trim()
+        : `Authentic ${item.name} available in stock!`;
 
-    const cleanCaption = item.whatsappCaption
-      ? item.whatsappCaption
-          .replace(/₦[\d,]+/g, "") // strip any price mentions
-          .replace(/👉[\s\S]*$/, "")
-          .trim()
-      : `Brand new in stock from ${businessName}!`;
-
-    return `🛍️ *${item.name}*\n${cleanCaption}\n\n👉 *Click here to see price & order safely:*\n${productUrl}\n\n🔒 *Protected by Kiosq SafeEscrow • Fast Doorstep Delivery*`;
-  };
-
-  // Caption for currently viewed item
-  const [editableCaption, setEditableCaption] = useState("");
-
-  useEffect(() => {
-    if (currentItem) {
-      setEditableCaption(generateCaption(currentItem));
+      return `🛍️ *${item.name}*\n${caption}\n\n👉 *Pay with zero fear • 100% Safe Delivery:*\n${productUrl}`;
     }
-  }, [currentItem]);
 
-  if (!isOpen || !items || items.length === 0 || !currentItem) return null;
+    // Bulk Share format (matches the collage cover slide #1)
+    const storeUrl = `https://usekiosq.shop/${merchantSlug}`;
+    return `🔥 *New Stock Just In from ${businessName}!* Swipe through to see today's arrivals.\n\n👉 *Pay with zero fear • 100% Safe Delivery:*\n${storeUrl}`;
+  }, [items, businessName, merchantSlug]);
 
-  // 1. Primary Action: Share Photo + Caption to WhatsApp Status
-  const handleShareToWhatsAppStatus = async () => {
+  const [customText, setCustomText] = useState(defaultText);
+
+  // Sync customText when items change
+  useEffect(() => {
+    setCustomText(defaultText);
+  }, [defaultText]);
+
+  if (!isOpen || !items || items.length === 0) return null;
+
+  // Primary Action: Share all photos + collage cover to WhatsApp in 1 tap
+  const handleShareToWhatsApp = async () => {
     setIsSharing(true);
-    const captionText = editableCaption.trim() || generateCaption(currentItem);
+    const captionText = customText.trim() || defaultText;
 
     try {
-      // Check if native Web Share API supports file sharing (Mobile Chrome / iOS Safari)
       if (typeof navigator !== "undefined" && navigator.canShare) {
-        const imageFile = await fetchImageFile(currentItem.image, `kiosq-${currentItem.slug || currentItem.id}`);
+        let filesToShare = [];
 
-        if (imageFile && navigator.canShare({ files: [imageFile] })) {
+        if (items.length === 1) {
+          // Single item: Stamp the photo with "🛍️ Verified Stock • usekiosq.shop"
+          const brandedFile = await stampProductImage(
+            items[0].image,
+            `kiosq-${items[0].slug || items[0].id}.jpg`
+          );
+          if (brandedFile) filesToShare.push(brandedFile);
+        } else {
+          // Bulk items:
+          // 1. Generate Lookbook Collage Cover as Slide #1
+          const collageCoverFile = await generateCollageCover(items, businessName);
+          if (collageCoverFile) {
+            filesToShare.push(collageCoverFile);
+          }
+
+          // 2. Stamp each individual product photo as subsequent slides
+          const stampedPhotos = await Promise.all(
+            items.map((item, idx) =>
+              stampProductImage(item.image, `kiosq-${idx + 1}-${item.slug || item.id}.jpg`)
+            )
+          );
+          filesToShare.push(...stampedPhotos.filter(Boolean));
+        }
+
+        // Test if files can be shared
+        if (filesToShare.length > 0 && navigator.canShare({ files: filesToShare })) {
           await navigator.share({
-            files: [imageFile],
+            files: filesToShare,
             text: captionText,
-            title: currentItem.name,
+            title: items.length === 1 ? items[0].name : `New Stock from ${businessName}`,
           });
 
-          addToast(`Shared "${currentItem.name}" image to WhatsApp!`, "success", 8000);
-
-          // If in bulk mode and not at last item, advance to next item
-          if (items.length > 1 && activeStep < items.length - 1) {
-            setActiveStep((prev) => prev + 1);
-          } else {
-            onClose();
-          }
+          addToast(
+            items.length === 1
+              ? `Shared "${items[0].name}" to WhatsApp!`
+              : `Shared Lookbook Cover + ${items.length} photos to WhatsApp!`,
+            "success",
+            8000
+          );
+          onClose();
           return;
         }
       }
 
-      // Fallback for browsers without Web Share file support:
-      // Open WhatsApp click-to-chat URL with text, and automatically download the photo
-      handleDownloadImage();
+      // Fallback: If device doesn't support Web Share API file attachments (e.g. desktop)
+      await handleDownloadAllPhotos();
       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(captionText)}`;
       window.open(whatsappUrl, "_blank");
 
       addToast(
-        "Downloaded product photo! In WhatsApp, select 'My Status', attach the photo, and paste your caption.",
+        "Downloaded branded photos! Open WhatsApp, tap My Status, attach the photos, and paste your caption.",
         "info",
         12000
       );
     } catch (err) {
       if (err.name !== "AbortError") {
         console.error("Share failed:", err);
-        addToast("Unable to trigger native share. Caption copied to clipboard.", "info", 8000);
+        addToast("Sharing interrupted. Caption copied to clipboard.", "info", 8000);
         navigator.clipboard?.writeText(captionText);
       }
     } finally {
@@ -117,46 +122,55 @@ export default function ShareModal({ isOpen, onClose, items = [], businessName =
     }
   };
 
-  // 2. Download product photo directly
-  const handleDownloadImage = async () => {
+  // Download all photos (with branding + collage cover)
+  const handleDownloadAllPhotos = async () => {
     try {
-      const res = await fetch(currentItem.image);
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${currentItem.slug || "product"}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      setCopiedType("image");
-      addToast("Product image saved to your device!", "success", 6000);
+      if (items.length > 1) {
+        // Download collage cover
+        const cover = await generateCollageCover(items, businessName);
+        if (cover) {
+          triggerDownload(cover, "00-kiosq-new-arrivals-cover.jpg");
+        }
+      }
+
+      // Download stamped photos
+      for (let i = 0; i < items.length; i++) {
+        const stamped = await stampProductImage(items[i].image, `kiosq-${i + 1}-${items[i].slug || "item"}.jpg`);
+        if (stamped) {
+          triggerDownload(stamped, stamped.name);
+        }
+      }
+
+      setCopiedType("images");
+      addToast(
+        items.length === 1 ? "Saved branded product photo!" : `Saved cover + ${items.length} product photos to gallery!`,
+        "success",
+        6000
+      );
       setTimeout(() => setCopiedType(null), 2500);
     } catch {
-      window.open(currentItem.image, "_blank");
+      addToast("Could not download all images automatically.", "error", 6000);
     }
   };
 
-  // 3. Copy Caption to clipboard
+  const triggerDownload = (file, fileName) => {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  // Copy Caption to clipboard
   const handleCopyCaption = () => {
-    const captionText = editableCaption.trim() || generateCaption(currentItem);
+    const textToCopy = customText.trim() || defaultText;
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(captionText);
+      navigator.clipboard.writeText(textToCopy);
       setCopiedType("caption");
-      addToast("Caption & checkout link copied to clipboard!", "success", 8000);
-      setTimeout(() => setCopiedType(null), 2500);
-    }
-  };
-
-  // 4. Copy Link Only
-  const handleCopyLinkOnly = () => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const productUrl = `${origin}/product/${currentItem.slug || currentItem.id}`;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(productUrl);
-      setCopiedType("link");
-      addToast("Product link copied!", "info", 6000);
+      addToast("WhatsApp caption copied to clipboard!", "success", 8000);
       setTimeout(() => setCopiedType(null), 2500);
     }
   };
@@ -175,10 +189,12 @@ export default function ShareModal({ isOpen, onClose, items = [], businessName =
             </div>
             <div>
               <h3 className="text-headline-sm font-extrabold text-on-surface">
-                Share to WhatsApp Status
+                {items.length === 1 ? "Share to WhatsApp Status" : `Bulk Share (${items.length} Items)`}
               </h3>
               <p className="text-xs text-on-surface-variant font-medium">
-                Photo + Link (Price hidden so buyers tap to view)
+                {items.length > 1
+                  ? "Collage Cover Slide + All Photos in 1 Tap"
+                  : "Branded Photo + Zero Fear Link"}
               </p>
             </div>
           </div>
@@ -190,143 +206,121 @@ export default function ShareModal({ isOpen, onClose, items = [], businessName =
           </button>
         </div>
 
-        {/* Bulk Stepper Bar (if multiple products selected) */}
-        {items.length > 1 && (
-          <div className="bg-surface-container-low p-3 rounded-DEFAULT border border-surface-container-high flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full bg-primary text-on-primary text-xs font-black">
-                {activeStep + 1} of {items.length}
-              </span>
-              <span className="text-body-sm font-bold text-on-surface truncate max-w-[160px] sm:max-w-[200px]">
-                {currentItem.name}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                disabled={activeStep === 0}
-                onClick={() => setActiveStep((prev) => prev - 1)}
-                className="w-8 h-8 rounded-full border border-primary flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-container transition-colors cursor-pointer"
-                title="Previous product"
-              >
-                <span className="material-symbols-outlined text-[16px]">chevron_left</span>
-              </button>
-              <button
-                type="button"
-                disabled={activeStep === items.length - 1}
-                onClick={() => setActiveStep((prev) => prev + 1)}
-                className="w-8 h-8 rounded-full border border-primary flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-container transition-colors cursor-pointer"
-                title="Next product"
-              >
-                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Product Image & Caption Preview Box */}
-        <div className="flex flex-col sm:flex-row gap-3.5 bg-surface-container-low p-3.5 rounded-DEFAULT border-2 border-primary/20">
-          <div className="relative shrink-0 w-full sm:w-28 h-36 sm:h-28 rounded-DEFAULT overflow-hidden border border-outline-variant bg-surface-container">
-            <img
-              src={currentItem.image}
-              alt={currentItem.name}
-              className="w-full h-full object-cover"
-            />
-            <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-              Photo
+        {/* Visual Preview Banner */}
+        <div className="bg-surface-container-low p-3.5 rounded-DEFAULT border-2 border-primary/20 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px] text-secondary">verified</span>
+              {items.length > 1 ? "Status Carousel Sequence" : "Branded Photo Preview"}
+            </span>
+            <span className="text-[11px] font-bold text-secondary bg-secondary-container px-2 py-0.5 rounded-full">
+              🛍️ Verified Stock • usekiosq.shop
             </span>
           </div>
 
-          <div className="flex flex-col justify-between flex-1 min-w-0">
-            <div>
-              <h4 className="text-headline-sm font-extrabold text-on-surface leading-tight">
-                {currentItem.name}
-              </h4>
-              <span className="inline-block text-[11px] font-bold text-secondary bg-secondary-container px-2 py-0.5 rounded-full mt-1">
-                🔒 Price Hidden on Status
-              </span>
+          {items.length > 1 ? (
+            <div className="flex items-center gap-2.5 overflow-x-auto py-1">
+              {/* Slide 1: Lookbook Collage Tag */}
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <div className="w-16 h-16 rounded-md bg-black text-white flex flex-col items-center justify-center p-1 text-center border-2 border-[#25D366] shadow-xs">
+                  <span className="text-[9px] font-black text-[#25D366] uppercase">Slide 1</span>
+                  <span className="text-[10px] font-bold leading-tight">Lookbook Cover</span>
+                </div>
+                <span className="text-[10px] font-bold text-primary">+ Caption</span>
+              </div>
+
+              {/* Subsequent Slides: Product Photos */}
+              {items.map((item, idx) => (
+                <div key={item.id} className="flex flex-col items-center gap-1 shrink-0">
+                  <div className="relative w-16 h-16 rounded-md overflow-hidden border border-outline-variant bg-surface-container">
+                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    <span className="absolute bottom-0.5 right-0.5 bg-black/80 text-white text-[9px] font-bold px-1 rounded">
+                      {idx + 2}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-medium text-on-surface-variant truncate max-w-[64px]">
+                    Photo {idx + 2}
+                  </span>
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-on-surface-variant mt-2">
-              Buyers must click your link to see price or start an AI negotiation.
-            </p>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <img
+                src={items[0].image}
+                alt={items[0].name}
+                className="w-16 h-16 rounded-md object-cover border border-outline-variant shrink-0"
+              />
+              <div className="flex flex-col min-w-0">
+                <h4 className="text-body-md font-extrabold text-on-surface truncate">{items[0].name}</h4>
+                <span className="text-xs text-on-surface-variant">Price hidden • Buyer taps link to view</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Editable Caption Preview */}
+        {/* WhatsApp Post Caption Preview */}
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <label className="text-label-sm font-bold text-on-surface uppercase tracking-wider">
               WhatsApp Status Caption
             </label>
-            <span className="text-xs text-on-surface-variant">Tap to customize</span>
+            <span className="text-xs text-on-surface-variant">Editable</span>
           </div>
           <textarea
-            rows={4}
-            value={editableCaption}
-            onChange={(e) => setEditableCaption(e.target.value)}
+            rows={items.length > 1 ? 4 : 5}
+            value={customText}
+            onChange={(e) => setCustomText(e.target.value)}
             className="w-full p-3 rounded-DEFAULT bg-surface-container-low border-2 border-primary text-body-sm font-mono text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 leading-relaxed resize-none"
-            placeholder="Status caption..."
+            placeholder="Type your WhatsApp post caption here..."
           />
         </div>
 
-        {/* Action Buttons */}
+        {/* Actions */}
         <div className="flex flex-col gap-2.5 pt-1">
-          {/* Main Action: Share Image + Caption directly to WhatsApp */}
+          {/* Main 1-Tap Action */}
           <button
             type="button"
             disabled={isSharing}
-            onClick={handleShareToWhatsAppStatus}
+            onClick={handleShareToWhatsApp}
             className="w-full h-13 rounded-full bg-[#25D366] hover:bg-[#1ebd5a] active:scale-[0.98] text-white font-extrabold text-label-md flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[3px_3px_0px_#000000] disabled:opacity-60"
           >
             <span className="material-symbols-outlined text-[22px]">
-              {isSharing ? "progress_activity" : "add_to_photos"}
+              {isSharing ? "progress_activity" : "chat"}
             </span>
             <span>
               {isSharing
-                ? "Preparing Photo..."
+                ? "Preparing Lookbook & Photos..."
                 : items.length > 1
-                ? `Post Photo ${activeStep + 1} of ${items.length} to Status`
-                : "Post Photo & Link to WhatsApp Status"}
+                ? `Post Cover + ${items.length} Photos to WhatsApp Status (1 Tap)`
+                : "Post Branded Photo to WhatsApp Status"}
             </span>
           </button>
 
-          {/* Secondary Helpers */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* Secondary Actions */}
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={handleDownloadImage}
-              className="h-10 rounded-full border-2 border-primary bg-surface-container-lowest text-on-surface hover:bg-surface-container text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
-              title="Save photo to your device"
+              onClick={handleDownloadAllPhotos}
+              className="h-10 rounded-full border-2 border-primary bg-surface-container-lowest text-on-surface hover:bg-surface-container text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              title="Download cover and all photos to phone gallery"
             >
-              <span className="material-symbols-outlined text-[15px]">
-                {copiedType === "image" ? "check" : "download"}
+              <span className="material-symbols-outlined text-[16px]">
+                {copiedType === "images" ? "check" : "download"}
               </span>
-              <span>{copiedType === "image" ? "Saved!" : "Save Photo"}</span>
+              <span>{copiedType === "images" ? "Saved to Gallery!" : "Save All to Gallery"}</span>
             </button>
 
             <button
               type="button"
               onClick={handleCopyCaption}
-              className="h-10 rounded-full border-2 border-primary bg-surface-container-lowest text-on-surface hover:bg-surface-container text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
-              title="Copy caption text to clipboard"
+              className="h-10 rounded-full border-2 border-primary bg-surface-container-lowest text-on-surface hover:bg-surface-container text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              title="Copy caption text and link"
             >
-              <span className="material-symbols-outlined text-[15px]">
+              <span className="material-symbols-outlined text-[16px]">
                 {copiedType === "caption" ? "check" : "content_copy"}
               </span>
               <span>{copiedType === "caption" ? "Copied!" : "Copy Caption"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCopyLinkOnly}
-              className="h-10 rounded-full border-2 border-primary bg-surface-container-lowest text-on-surface hover:bg-surface-container text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
-              title="Copy direct product link"
-            >
-              <span className="material-symbols-outlined text-[15px]">
-                {copiedType === "link" ? "check" : "link"}
-              </span>
-              <span>{copiedType === "link" ? "Copied!" : "Copy Link"}</span>
             </button>
           </div>
         </div>
