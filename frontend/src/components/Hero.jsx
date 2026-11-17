@@ -10,7 +10,7 @@ function Hero() {
             </section> */}
       {/**using a div for the pill instead */}
       <div className="top-pill">
-        <p>Lekki . Yaba . Abuja</p>
+        <p>Meet Ara • AI Sales Agent</p>
         <p>Live System</p>
       </div>
 
@@ -34,7 +34,7 @@ function Hero() {
         </h1>
 
         <p>
-          Sell on WhatsApp with safe payments and an AI that haggles for you.
+          Sell on WhatsApp with safe payments and Ara, your AI sales agent that negotiates for you.
         </p>
       </div>
 
@@ -48,8 +48,8 @@ function Hero() {
       {/* Chat bubble */}
       <div>
         <div className="profile-picture">
-          <p>AI</p>
-          <p>Kiosq Haggler Bot Active in dm_uche_lagos</p>
+          <p>Ara</p>
+          <p>Ara • Kiosq AI Agent Active in dm_uche_lagos</p>
         </div>
         <div>
           <p>

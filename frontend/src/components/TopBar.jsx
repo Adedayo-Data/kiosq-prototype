@@ -3,11 +3,11 @@ import { Link } from "react-router";
 export default function TopBar() {
   return (
     <header className="w-full flex items-center justify-between py-3 border-b border-surface-container-high/60 md:border-none">
-      {/* Location guarantee badge */}
+      {/* AI Agent badge */}
       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container">
-        <span className="material-symbols-outlined text-[16px]">verified_user</span>
+        <span className="material-symbols-outlined text-[16px]">smart_toy</span>
         <span className="text-label-sm uppercase tracking-wider font-bold">
-          Lekki • Yaba • Abuja
+          Meet Ara • AI Sales Agent
         </span>
       </div>
 

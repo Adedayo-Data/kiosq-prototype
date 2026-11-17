@@ -268,7 +268,7 @@ export default function SellerDashboard() {
             {/* AI Deals Closed */}
             <div className="bg-surface-container-lowest p-5 rounded-DEFAULT shadow-[2px_2px_0px_#000000] border-2 border-primary flex flex-col gap-1">
               <span className="text-label-sm text-on-surface-variant font-bold uppercase">
-                AI Haggler Auto-Closes
+                Ara Deals Closed
               </span>
               <span className="text-[28px] font-extrabold text-on-surface tracking-tight">
                 {metrics.aiDealsCount} Deals

@@ -86,10 +86,10 @@ export default function FeatureCards() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <h3 className="text-headline-sm text-on-surface font-bold">Let AI haggle</h3>
+            <h3 className="text-headline-sm text-on-surface font-bold">Let Ara haggle</h3>
             <p className="text-body-md text-on-surface-variant leading-relaxed">
-              Kiosq AI negotiates fair deals in Pidgin or plain English 24/7 without waking you up.
-              It strictly protects your minimum profit floor.
+              Ara negotiates fair deals in Pidgin or plain English 24/7 without waking you up.
+              She strictly protects your minimum profit floor.
             </p>
           </div>
 
@@ -98,7 +98,7 @@ export default function FeatureCards() {
               className="text-left text-label-md text-on-surface underline underline-offset-4 flex items-center gap-1 cursor-pointer font-bold"
               type="button"
             >
-              Test haggler live
+              Chat with Ara
               <span className="material-symbols-outlined text-[16px]">chat</span>
             </button>
           </div>

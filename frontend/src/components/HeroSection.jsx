@@ -54,7 +54,8 @@ export default function HeroSection() {
               in the chat.
             </h1>
             <p className="text-body-lg sm:text-[18px] sm:leading-[26px] text-on-surface-variant mt-3 max-w-xl">
-              Sell on WhatsApp with safe payments, dual-protection escrow, and an AI agent that
+              Sell on WhatsApp with safe payments, dual-protection escrow, and{" "}
+              <span className="font-bold text-on-surface">Ara</span> — your AI sales agent that
               negotiates and closes deals for you 24/7.
             </p>
           </div>
@@ -111,16 +112,17 @@ export default function HeroSection() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center text-label-md font-bold shadow-xs">
-                  AI
+                  Ara
                 </div>
                 <div>
                   <p className="text-label-md text-on-surface leading-tight font-bold">
-                    Kiosq Haggler Bot
+                    Ara • Kiosq AI Agent
                   </p>
                   <p className="text-body-sm text-on-surface-variant">Active in dm_uche_lagos</p>
                 </div>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full bg-surface-container-high text-label-sm text-on-surface font-semibold">
+              <span className="px-2.5 py-0.5 rounded-full bg-surface-container-high text-label-sm text-on-surface font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
                 Live Now
               </span>
             </div>
@@ -129,15 +131,15 @@ export default function HeroSection() {
             <div className="bg-surface-container p-3.5 rounded-DEFAULT flex flex-col gap-2.5 border border-surface-container-high">
               <p className="text-body-md text-on-surface leading-relaxed">
                 “Buyer offered ₦22,000 for Vintage Adire Shirt. Floor is ₦25,000. Counter-offered{" "}
-                <span className="font-bold">₦26,500</span> with free delivery within Yaba!”
+                <span className="font-bold">₦26,500</span> with doorstep delivery!”
               </p>
               <div className="flex flex-wrap items-center justify-between gap-1 pt-1 border-t border-surface-container-high/60">
                 <span className="text-label-sm text-secondary font-bold flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[15px]">lock</span>
-                  ₦26,500 Ready for Escrow
+                  <span className="material-symbols-outlined text-[15px]">verified</span>
+                  ₦26,500 Safe Payment Ready
                 </span>
                 <span className="text-label-sm text-on-surface-variant font-medium">
-                  Status: Auto-Negotiating
+                  Status: Ara Negotiating
                 </span>
               </div>
             </div>
