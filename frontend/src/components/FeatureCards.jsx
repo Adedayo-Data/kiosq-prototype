@@ -59,26 +59,11 @@ export default function FeatureCards() {
           </div>
         </div>
 
-        {/* Card 2: Let AI haggle */}
+        {/* Card 2: Let Ara haggle */}
         <div className="bg-surface-container-lowest p-5 rounded-DEFAULT flex flex-col justify-between gap-4 relative overflow-hidden shadow-xs border border-outline-variant/30 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary">
-              <svg
-                fill="none"
-                height="24"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                width="24"
-                aria-hidden="true"
-              >
-                <rect height="12" rx="2" width="16" x="4" y="6" />
-                <path d="M9 11v.01M15 11v.01" />
-                <path d="M9 15h6" />
-                <path d="M12 2v4M2 12h2M20 12h2" />
-              </svg>
+            <div className="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center">
+              <span className="material-symbols-outlined text-[24px]">auto_awesome</span>
             </div>
             <span className="text-label-sm bg-secondary-container text-on-secondary-container px-2.5 py-0.5 rounded-full font-bold">
               24/7 Closes Deals

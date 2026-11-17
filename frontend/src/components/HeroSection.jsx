@@ -115,8 +115,9 @@ export default function HeroSection() {
                   Ara
                 </div>
                 <div>
-                  <p className="text-label-md text-on-surface leading-tight font-bold">
-                    Ara • Kiosq AI Agent
+                  <p className="text-label-md text-on-surface leading-tight font-bold flex items-center gap-1">
+                    <span>Ara • Kiosq AI Agent</span>
+                    <span className="material-symbols-outlined text-[15px] text-secondary">auto_awesome</span>
                   </p>
                   <p className="text-body-sm text-on-surface-variant">Active in dm_uche_lagos</p>
                 </div>

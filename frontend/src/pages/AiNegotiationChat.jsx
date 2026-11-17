@@ -37,7 +37,7 @@ export default function AiNegotiationChat() {
         initialOffer
       ).toLocaleString()} dey a bit low for 6 yards. But because say na from WhatsApp you come, my last card for you na ₦24,500 with same-day dispatch! How you see am?`,
       time: "Just now",
-      badge: "Kiosq AI Negotiator (Mama Tola's Rep)",
+      badge: "Ara (Mama Tola's Rep)",
     },
   ]);
 
@@ -108,7 +108,7 @@ export default function AiNegotiationChat() {
 
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-bold">
-              AI
+              Ara
             </div>
             <div className="flex flex-col">
               <h2 className="text-label-md font-bold text-on-surface leading-tight">
@@ -116,7 +116,7 @@ export default function AiNegotiationChat() {
               </h2>
               <span className="text-[11px] text-secondary font-bold flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
-                Kiosq Bargaining Bot (Rep for Mama Tola) 🤖
+                Ara (Rep for Mama Tola) ✨
               </span>
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function AiNegotiationChat() {
             >
               {msg.badge && (
                 <span className="text-[11px] font-bold text-secondary mb-1 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[13px]">smart_toy</span>
+                  <span className="material-symbols-outlined text-[13px]">auto_awesome</span>
                   {msg.badge}
                 </span>
               )}

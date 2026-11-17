@@ -5,7 +5,7 @@ export default function TopBar() {
     <header className="w-full flex items-center justify-between py-3 border-b border-surface-container-high/60 md:border-none">
       {/* AI Agent badge */}
       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container">
-        <span className="material-symbols-outlined text-[16px]">smart_toy</span>
+        <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
         <span className="text-label-sm uppercase tracking-wider font-bold">
           Meet Ara • AI Sales Agent
         </span>
