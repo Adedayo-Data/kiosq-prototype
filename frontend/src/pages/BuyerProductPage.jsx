@@ -173,9 +173,6 @@ export default function BuyerProductPage() {
                 <span className="material-symbols-outlined text-[14px]">chat</span>
                 WhatsApp Verified Link
               </span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant font-bold bg-surface-container-high px-2 py-0.5 rounded-full">
-                BALOGUN LIVE
-              </span>
             </div>
           </div>
 

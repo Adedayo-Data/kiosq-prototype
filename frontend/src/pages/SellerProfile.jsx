@@ -15,7 +15,7 @@ export default function SellerProfile() {
     if (stored) {
       try {
         setMerchant(JSON.parse(stored));
-      } catch (e) {}
+      } catch (e) { }
     }
   }, []);
 
@@ -179,13 +179,23 @@ export default function SellerProfile() {
               </div>
             </div>
 
-            <Link
-              to="/transactions"
-              className="mt-1 w-full h-12 rounded-full bg-primary text-on-primary text-label-md font-bold flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer shadow-[2px_2px_0px_#000000]"
-            >
-              <span>View all transactions</span>
-              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-            </Link>
+            <div className="flex flex-col gap-2 mt-1">
+              <Link
+                to="/transactions"
+                className="w-full h-12 rounded-full bg-primary text-on-primary text-label-md font-bold flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer shadow-[2px_2px_0px_#000000]"
+              >
+                <span>View all transactions</span>
+                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+              </Link>
+
+              <Link
+                to="/products"
+                className="w-full h-11 rounded-full border-2 border-primary bg-surface-container-lowest text-on-surface hover:bg-surface-container text-label-md font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">inventory_2</span>
+                <span>Manage & Bulk Share Products</span>
+              </Link>
+            </div>
           </div>
         </div>
       </main>

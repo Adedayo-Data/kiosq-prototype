@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useToast } from "../context/ToastContext";
 import KiosqLogo from "../components/KiosqLogo";
+import ShareModal from "../components/ShareModal";
 import {
   FALLBACK_ANKARA_IMAGE,
   FALLBACK_SNEAKERS_IMAGE,
@@ -22,6 +23,8 @@ export default function SellerDashboard() {
     aiDealsCount: 19,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [itemsToShare, setItemsToShare] = useState([]);
 
   const fallbackProducts = [
     {
@@ -141,25 +144,8 @@ export default function SellerDashboard() {
   };
 
   const handleShareProduct = (item) => {
-    const productUrl = `${window.location.origin}/product/${item.slug || item.id}`;
-    const textToCopy = item.whatsappCaption
-      ? `${item.whatsappCaption}\n\n👉 Pay or Haggle Safely: ${productUrl}`
-      : `🔥 ${item.name} • ${item.price}\nProtected by Kiosq Escrow: ${productUrl}`;
-
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(textToCopy);
-      addToast(
-        `Copied WhatsApp post for "${item.name}"! Paste directly to your WhatsApp Status or DM.`,
-        "success",
-        10000
-      );
-    } else {
-      addToast(
-        `Share link: ${productUrl}`,
-        "info",
-        10000
-      );
-    }
+    setItemsToShare([item]);
+    setShareModalOpen(true);
   };
 
   const filteredProducts = products.filter((p) => {
@@ -179,6 +165,15 @@ export default function SellerDashboard() {
             </Link>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              <Link
+                to="/products"
+                className="inline-flex items-center gap-1.5 bg-surface-container hover:bg-surface-container-high text-on-surface px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-label-sm font-bold transition-colors cursor-pointer"
+                title="View All Products & Bulk Share"
+              >
+                <span className="material-symbols-outlined text-[18px]">inventory_2</span>
+                <span className="hidden sm:inline">Products</span>
+              </Link>
+
               <Link
                 to="/transactions"
                 className="inline-flex items-center gap-1.5 bg-surface-container hover:bg-surface-container-high text-on-surface px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-label-sm font-bold transition-colors cursor-pointer"
@@ -284,23 +279,24 @@ export default function SellerDashboard() {
             </div>
           </div>
 
-          {/* Product Catalog Section */}
+          {/* Recent Products Section */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-headline-md font-extrabold text-on-surface">Your Products</h2>
-              <div className="flex items-center gap-1 bg-surface-container p-1 rounded-full text-label-sm font-bold">
-                {["all", "escrow", "active"].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-3 py-1 rounded-full capitalize transition-all cursor-pointer ${filter === f
-                      ? "bg-primary text-on-primary"
-                      : "text-on-surface hover:text-neutral-600"
-                      }`}
-                  >
-                    {f}
-                  </button>
-                ))}
+              <div>
+                <h2 className="text-headline-md font-extrabold text-on-surface">Recent Products</h2>
+                <span className="text-xs text-on-surface-variant font-medium">
+                  Showing latest 5 items. Manage and bulk share in Catalog.
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/products"
+                  className="inline-flex items-center gap-1 text-label-sm font-bold text-primary hover:underline bg-surface-container px-3 py-1.5 rounded-full"
+                >
+                  <span>View All ({products.length})</span>
+                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </Link>
               </div>
             </div>
 
@@ -322,7 +318,7 @@ export default function SellerDashboard() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {filteredProducts.map((item) => (
+                {filteredProducts.slice(0, 5).map((item) => (
                   <div
                     key={item.id}
                     className="bg-surface-container-lowest p-4 rounded-DEFAULT shadow-xs border-2 border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary transition-all"
@@ -365,12 +361,13 @@ export default function SellerDashboard() {
                       </span>
 
                       <button
+                        type="button"
                         onClick={() => handleShareProduct(item)}
-                        className="inline-flex items-center gap-1 bg-[#25D366] text-white text-label-sm font-bold px-3 py-1.5 rounded-full hover:bg-[#1ebd59] transition-colors cursor-pointer shadow-xs"
-                        title="Copy WhatsApp share text and link"
+                        className="inline-flex items-center gap-1.5 bg-[#25D366] hover:bg-[#1ebd59] text-white text-xs font-bold px-3.5 py-2 rounded-full transition-colors cursor-pointer shadow-[2px_2px_0px_#000000] active:scale-[0.98]"
+                        title="Share to WhatsApp Status or chats"
                       >
                         <span className="material-symbols-outlined text-[16px]">share</span>
-                        <span>Status</span>
+                        <span>Share</span>
                       </button>
                     </div>
                   </div>
@@ -380,6 +377,14 @@ export default function SellerDashboard() {
           </div>
         </div>
       </main>
+
+      {/* WhatsApp Share Pop-up Modal */}
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        items={itemsToShare}
+        businessName={merchant?.businessName || "My Kiosq"}
+      />
     </div>
   );
 }

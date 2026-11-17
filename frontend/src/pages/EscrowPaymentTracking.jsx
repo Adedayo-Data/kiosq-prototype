@@ -174,11 +174,10 @@ export default function EscrowPaymentTracking() {
                   {disputeStages.map((stage, idx) => (
                     <div key={stage.label} className="flex flex-col items-center gap-1">
                       <div
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                          stage.active
-                            ? "bg-error text-white shadow-xs"
-                            : "bg-surface-container text-on-surface-variant border border-outline-variant"
-                        }`}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${stage.active
+                          ? "bg-error text-white shadow-xs"
+                          : "bg-surface-container text-on-surface-variant border border-outline-variant"
+                          }`}
                       >
                         {stage.active ? "✓" : idx + 1}
                       </div>
@@ -343,11 +342,10 @@ export default function EscrowPaymentTracking() {
                     <div
                       key={r.id}
                       onClick={() => setSelectedReason(r.id)}
-                      className={`p-3.5 rounded-DEFAULT border-2 transition-all cursor-pointer flex items-start gap-3 ${
-                        selectedReason === r.id
-                          ? "border-primary bg-surface-container-low shadow-[2px_2px_0px_#000000]"
-                          : "border-outline-variant/40 bg-surface-container-lowest hover:border-primary/50"
-                      }`}
+                      className={`p-3.5 rounded-DEFAULT border-2 transition-all cursor-pointer flex items-start gap-3 ${selectedReason === r.id
+                        ? "border-primary bg-surface-container-low shadow-[2px_2px_0px_#000000]"
+                        : "border-outline-variant/40 bg-surface-container-lowest hover:border-primary/50"
+                        }`}
                     >
                       <span className="material-symbols-outlined text-[24px] text-primary shrink-0 mt-0.5">
                         {r.icon}

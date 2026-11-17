@@ -69,33 +69,30 @@ export default function OrdersList() {
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             <button
               onClick={() => setFilter("awaiting-pin")}
-              className={`px-3.5 py-1.5 rounded-full text-label-sm font-bold transition-all shrink-0 cursor-pointer ${
-                filter === "awaiting-pin"
-                  ? "bg-primary text-on-primary shadow-xs"
-                  : "bg-surface-container text-on-surface hover:bg-surface-container-high"
-              }`}
+              className={`px-3.5 py-1.5 rounded-full text-label-sm font-bold transition-all shrink-0 cursor-pointer ${filter === "awaiting-pin"
+                ? "bg-primary text-on-primary shadow-xs"
+                : "bg-surface-container text-on-surface hover:bg-surface-container-high"
+                }`}
             >
               Awaiting Delivery PIN ({awaitingPinCount})
             </button>
 
             <button
               onClick={() => setFilter("all")}
-              className={`px-3.5 py-1.5 rounded-full text-label-sm font-bold transition-all shrink-0 cursor-pointer ${
-                filter === "all"
-                  ? "bg-primary text-on-primary shadow-xs"
-                  : "bg-surface-container text-on-surface hover:bg-surface-container-high"
-              }`}
+              className={`px-3.5 py-1.5 rounded-full text-label-sm font-bold transition-all shrink-0 cursor-pointer ${filter === "all"
+                ? "bg-primary text-on-primary shadow-xs"
+                : "bg-surface-container text-on-surface hover:bg-surface-container-high"
+                }`}
             >
               All Orders ({orders.length})
             </button>
 
             <button
               onClick={() => setFilter("completed")}
-              className={`px-3.5 py-1.5 rounded-full text-label-sm font-bold transition-all shrink-0 cursor-pointer ${
-                filter === "completed"
-                  ? "bg-primary text-on-primary shadow-xs"
-                  : "bg-surface-container text-on-surface hover:bg-surface-container-high"
-              }`}
+              className={`px-3.5 py-1.5 rounded-full text-label-sm font-bold transition-all shrink-0 cursor-pointer ${filter === "completed"
+                ? "bg-primary text-on-primary shadow-xs"
+                : "bg-surface-container text-on-surface hover:bg-surface-container-high"
+                }`}
             >
               Delivered &amp; Released
             </button>
@@ -130,23 +127,22 @@ export default function OrdersList() {
                           {order.orderReference}
                         </span>
                         <span
-                          className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                            order.deliveryStatus === "FUNDS_HELD_IN_ESCROW"
-                              ? "bg-amber-100 text-amber-900"
-                              : order.deliveryStatus === "DISPATCHED"
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${order.deliveryStatus === "FUNDS_HELD_IN_ESCROW"
+                            ? "bg-amber-100 text-amber-900"
+                            : order.deliveryStatus === "DISPATCHED"
                               ? "bg-blue-100 text-blue-900"
                               : order.deliveryStatus === "DELIVERED_AND_RELEASED"
-                              ? "bg-secondary-container text-on-secondary-container"
-                              : "bg-error/15 text-error"
-                          }`}
+                                ? "bg-secondary-container text-on-secondary-container"
+                                : "bg-error/15 text-error"
+                            }`}
                         >
                           {order.deliveryStatus === "FUNDS_HELD_IN_ESCROW"
                             ? "Awaiting Dispatch"
                             : order.deliveryStatus === "DISPATCHED"
-                            ? "Out for Delivery"
-                            : order.deliveryStatus === "DELIVERED_AND_RELEASED"
-                            ? "Delivered & Released"
-                            : "Disputed"}
+                              ? "Out for Delivery"
+                              : order.deliveryStatus === "DELIVERED_AND_RELEASED"
+                                ? "Delivered & Released"
+                                : "Disputed"}
                         </span>
                       </div>
 

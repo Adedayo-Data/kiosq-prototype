@@ -9,6 +9,7 @@ import AiNegotiationChat from "./pages/AiNegotiationChat";
 import EscrowPaymentTracking from "./pages/EscrowPaymentTracking";
 import SellerDashboard from "./pages/SellerDashboard";
 import AddProduct from "./pages/AddProduct";
+import ProductsPage from "./pages/ProductsPage";
 import TransactionsPage from "./pages/TransactionsPage";
 import SellerProfile from "./pages/SellerProfile";
 import OrdersList from "./pages/OrdersList";
@@ -35,6 +36,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <SellerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/products"
+            element={
+              <ProtectedRoute>
+                <ProductsPage />
               </ProtectedRoute>
             }
           />
