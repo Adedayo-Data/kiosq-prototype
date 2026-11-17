@@ -1,15 +1,44 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { FALLBACK_ANKARA_IMAGE } from "../utils/constants";
 
 export default function BuyerProductPage() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState("25500");
   const [customOffer, setCustomOffer] = useState("");
 
+  useEffect(() => {
+    if (id) {
+      fetch(`http://localhost:8080/api/v1/products/${id}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data) {
+            setProduct(data);
+            if (data.askingPrice) {
+              const asking = Number(data.askingPrice);
+              setSelectedOffer(String(Math.round(asking * 0.9)));
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [id]);
+
   const handleStartHaggle = (offerVal) => {
-    navigate(`/haggle/ankara-wax?offer=${offerVal || selectedOffer}`);
+    const slug = product?.slug || id || "ankara-wax";
+    navigate(`/haggle/${slug}?offer=${offerVal || selectedOffer}`);
   };
+
+  const displayImage = product?.imageUrl || FALLBACK_ANKARA_IMAGE;
+  const displayTitle = product?.title || "Authentic Ankara Wax Print (6 Yards)";
+  const displayPrice = product?.askingPrice
+    ? `₦${Number(product.askingPrice).toLocaleString()}`
+    : "₦28,000";
+  const displayMerchant = product?.merchantName || "Mama Tola Textiles";
+  const displayLocation = product?.merchantLocation || "Balogun Market, Lagos Island";
 
   return (
     <div className="bg-surface text-on-surface min-h-screen flex flex-col items-center">
@@ -42,8 +71,8 @@ export default function BuyerProductPage() {
             <div className="md:col-span-6 flex flex-col gap-4">
               <div className="relative w-full rounded-DEFAULT bg-surface-container-lowest overflow-hidden shadow-xs border border-outline-variant/30">
                 <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKJfLOn4VRMScTfJqlEtJ9M39g70YXxZSSZ_RABRROV5nCaPrT3yV6Wq_Vl8zH-V3eJ4P-L1-mN3cZ4w-yC1IleipBYtXwlQXYnpWwU_RfpkZ-Xq7H98UQCRsDDdapHalEW4ppP5GV745cCobx5RsGWN-LNxGPBKqAb4Rn3eIuHpI0Z-yb4XeS-HkIc0S1898uDkibmN2nxznGb-CK-AZ6x8D"
-                  alt="Authentic Ankara Wax Print"
+                  src={displayImage}
+                  alt={displayTitle}
                   className="w-full h-80 sm:h-96 object-cover"
                 />
 
@@ -56,7 +85,7 @@ export default function BuyerProductPage() {
                 </div>
 
                 <div className="absolute bottom-3 right-3 bg-surface/90 backdrop-blur-xs text-on-surface px-2.5 py-1 rounded-full text-label-sm font-bold shadow-xs">
-                  6 Yards Wax Hollandais
+                  {product?.category || "Verified Merchandise"}
                 </div>
               </div>
 
@@ -91,7 +120,7 @@ export default function BuyerProductPage() {
                       ORIGIN
                     </span>
                     <span className="text-body-md text-on-surface font-bold">
-                      Balogun Textiles, Lagos
+                      {displayLocation}
                     </span>
                   </div>
                 </div>
@@ -105,22 +134,21 @@ export default function BuyerProductPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <span className="inline-block px-2.5 py-0.5 mb-1.5 text-label-sm rounded-DEFAULT bg-surface-container-high text-on-surface uppercase font-bold tracking-tight">
-                      Grade A Super Wax
+                      Verified Stock
                     </span>
                     <h1 className="text-headline-lg sm:text-[28px] text-on-surface font-extrabold tracking-tight leading-tight">
-                      Authentic Ankara Wax Print (6 Yards)
+                      {displayTitle}
                     </h1>
                     <p className="text-body-sm text-on-surface-variant mt-1">
-                      Teal &amp; Gold Celestial Swirl • 100% Combed Cotton
+                      {product?.description || "Authentic social commerce stock • Verified escrow guaranteed"}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-baseline gap-3 mt-3">
                   <span className="text-[32px] font-extrabold text-on-surface tracking-tight">
-                    ₦28,000
+                    {displayPrice}
                   </span>
-                  <span className="text-body-md text-on-surface-variant line-through">₦32,000</span>
                   <span className="text-label-sm bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full font-bold">
                     Floor protected
                   </span>
@@ -136,7 +164,7 @@ export default function BuyerProductPage() {
                   <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-1">
                       <h3 className="text-headline-sm text-on-surface truncate font-bold">
-                        Mama Tola Textiles
+                        {displayMerchant}
                       </h3>
                       <span className="material-symbols-outlined text-[16px] text-secondary">
                         check_circle
@@ -144,7 +172,7 @@ export default function BuyerProductPage() {
                     </div>
                     <span className="text-body-sm text-on-surface-variant flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">location_on</span>
-                      Balogun Market, Lagos Island
+                      {displayLocation}
                     </span>
                   </div>
                 </div>

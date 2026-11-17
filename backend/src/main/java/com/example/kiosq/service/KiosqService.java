@@ -63,6 +63,13 @@ public class KiosqService {
         });
     }
 
+    // Get Logged-in Merchant's Products for Dashboard
+    @Transactional(readOnly = true)
+    public List<Product> getMerchantProducts() {
+        Merchant m = getCurrentMerchant();
+        return productRepository.findByMerchantIdOrderByCreatedAtDesc(m.getId());
+    }
+
     // 1. Create Product Listing (Merchant only)
     @Transactional
     public Product createProduct(CreateProductRequest req) {
@@ -76,7 +83,7 @@ public class KiosqService {
         product.setAskingPrice(req.askingPrice());
         product.setFloorPrice(req.floorPrice());
         product.setCategory(req.category());
-        product.setImageUrl(req.imageUrl() != null ? req.imageUrl() : "https://lh3.googleusercontent.com/aida-public/AB6AXuAKJfLOn4VRMScTfJqlEtJ9M39g70YXxZSSZ_RABRROV5nCaPrT3yV6Wq_Vl8zH-V3eJ4P-L1-mN3cZ4w-yC1IleipBYtXwlQXYnpWwU_RfpkZ-Xq7H98UQCRsDDdapHalEW4ppP5GV745cCobx5RsGWN-LNxGPBKqAb4Rn3eIuHpI0Z-yb4XeS-HkIc0S1898uDkibmN2nxznGb-CK-AZ6x8D");
+        product.setImageUrl(req.imageUrl());
         product.setWhatsappCaption(req.whatsappCaption() != null ? req.whatsappCaption() : "Fresh drop! Buy securely on Kiosq with SafeEscrow.");
         product.setMerchant(merchant);
 
@@ -140,6 +147,13 @@ public class KiosqService {
     @Transactional(readOnly = true)
     public Map<String, Object> getPublicProduct(String slug) {
         Product p = productRepository.findBySlug(slug)
+            .or(() -> {
+                try {
+                    return productRepository.findById(Long.parseLong(slug));
+                } catch (NumberFormatException e) {
+                    return Optional.empty();
+                }
+            })
             .orElseThrow(() -> new RuntimeException("Product not found with slug: " + slug));
 
         Map<String, Object> map = new LinkedHashMap<>();

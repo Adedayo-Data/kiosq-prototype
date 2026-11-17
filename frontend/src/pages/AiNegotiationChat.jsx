@@ -1,10 +1,24 @@
-import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { FALLBACK_ANKARA_IMAGE } from "../utils/constants";
 
 export default function AiNegotiationChat() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
   const [searchParams] = useSearchParams();
   const initialOffer = searchParams.get("offer") || "22000";
+
+  useEffect(() => {
+    if (id) {
+      fetch(`http://localhost:8080/api/v1/products/${id}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data) setProduct(data);
+        })
+        .catch(() => {});
+    }
+  }, [id]);
 
   const [messages, setMessages] = useState([
     {
@@ -108,16 +122,16 @@ export default function AiNegotiationChat() {
         <div className="bg-surface-container-lowest p-3 my-2 rounded-DEFAULT flex items-center justify-between shadow-xs border border-outline-variant/30 shrink-0">
           <div className="flex items-center gap-3">
             <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKJfLOn4VRMScTfJqlEtJ9M39g70YXxZSSZ_RABRROV5nCaPrT3yV6Wq_Vl8zH-V3eJ4P-L1-mN3cZ4w-yC1IleipBYtXwlQXYnpWwU_RfpkZ-Xq7H98UQCRsDDdapHalEW4ppP5GV745cCobx5RsGWN-LNxGPBKqAb4Rn3eIuHpI0Z-yb4XeS-HkIc0S1898uDkibmN2nxznGb-CK-AZ6x8D"
-              alt="Ankara"
+              src={product?.imageUrl || FALLBACK_ANKARA_IMAGE}
+              alt={product?.title || "Product"}
               className="w-11 h-11 rounded-md object-cover"
             />
             <div className="flex flex-col">
               <h3 className="text-label-md font-bold text-on-surface">
-                Authentic Ankara Wax Print (6 Yards)
+                {product?.title || "Authentic Ankara Wax Print (6 Yards)"}
               </h3>
               <span className="text-body-sm text-on-surface-variant">
-                Asking: ₦28,000 • Floor protected
+                Asking: {product?.askingPrice ? `₦${Number(product.askingPrice).toLocaleString()}` : "₦28,000"} • Floor protected
               </span>
             </div>
           </div>

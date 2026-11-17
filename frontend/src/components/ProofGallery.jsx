@@ -1,3 +1,5 @@
+import { FALLBACK_ANKARA_IMAGE, FALLBACK_SNEAKERS_IMAGE } from "../utils/constants";
+
 export default function ProofGallery() {
   const merchants = [
     {
@@ -5,8 +7,7 @@ export default function ProofGallery() {
       location: "Yaba, Lagos",
       deals: "180+ Deals",
       tag: "Fashion & Fabrics",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuCBX-u9wryLR56yDqXiQu3bprUb7DT2qXKe4wlyxQqhfRjBtNDiLASybetYqLudyEyxtDK-sheSgmIE5mDbWioeoxc3OZTGL31pG32E6E4mEI1Cf2YTexWBVJLt2BizO_GB_-ZKYNCRHgTVDlfimMrfHnWbVrYMxjw05hgGX5fmk66NBuve_lFGVuQB3auf3tHAnijR7fYfehoj4gSFZnkGIr8yRgGm0XMX8NwDO1-n",
+      image: FALLBACK_ANKARA_IMAGE,
       alt: "Lagos fashion merchant styling vibrant Nigerian patterned fabrics",
     },
     {
@@ -14,8 +15,7 @@ export default function ProofGallery() {
       location: "Wuse II, Abuja",
       deals: "340+ Deals",
       tag: "Footwear & Dropship",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuDCmkOTf2Gi6WDBUDsF9jh5Bm8p1mpdjAWTrenu6lhZ2knb1RZga7L913-QANPu_Aox4kq-aa3rygZLLOvOdK48MImMt88CN3D-yC1IleipBYtXwlQXYnpWwU_RfpkZ-Xq7H98UQCRsDDdapHalEW4ppP5GV745cCobx5RsGWN-LNxGPBKqAb4Rn3eIuHpI0Z-yb4XeS-HkIc0S1898uDkibmN2nxznGb-CK-AZ6x8D",
+      image: FALLBACK_SNEAKERS_IMAGE,
       alt: "Young Nigerian footwear vendor arranging handcrafted leather sneakers",
     },
   ];

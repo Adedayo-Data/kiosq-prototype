@@ -43,8 +43,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Email-based UserDetailsService backed by the Merchant database
-    // This explicitly replaces Spring Security's default in-memory auto-configuration
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> {
@@ -79,11 +77,11 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
-                // 1. Auth endpoints (Register & Login with Email)
+                // 1. Auth endpoints
                 .requestMatchers("/api/v1/auth/**").permitAll()
 
-                // 2. Public storefront & buyer flows (WhatsApp Links)
-                .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
+                // 2. Public buyer & storefront endpoints (WhatsApp Links)
+                .requestMatchers(HttpMethod.GET, "/api/v1/products/*").permitAll()
                 .requestMatchers("/api/v1/negotiations/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/escrow/orders").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/escrow/orders/**").permitAll()
@@ -92,7 +90,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/riders/verify-pin").permitAll()
 
                 // 4. Protected Seller Management Endpoints (Require Bearer Token)
-                .requestMatchers(HttpMethod.POST, "/api/v1/products").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/products").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/products/**").authenticated()
                 .requestMatchers("/api/v1/dashboard/**").authenticated()
 
                 .anyRequest().authenticated()

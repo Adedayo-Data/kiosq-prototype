@@ -1,21 +1,22 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router";
 import { uploadMultipleToCloudinary } from "../utils/cloudinary";
+import { useToast } from "../context/ToastContext";
 
 export default function AddProduct() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { addToast } = useToast();
 
   // Upload & processing state
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
 
   // Staged products array (supports up to 20 images)
   const [stagedProducts, setStagedProducts] = useState([]);
 
-  // Active product being edited in detail view
+  // Active product being edited in detail modal
   const [editingIndex, setEditingIndex] = useState(null);
 
   // Handle file selection (up to 20 photos)
@@ -24,16 +25,15 @@ export default function AddProduct() {
     if (!files.length) return;
 
     if (files.length > 20) {
-      setError("Please select at most 20 images at a time.");
+      addToast("You can upload a maximum of 20 images at once.", "error", 12000);
       return;
     }
 
-    setError("");
     setIsUploading(true);
     setUploadProgress({ current: 0, total: files.length });
 
     try {
-      // 1. Direct Unsigned Upload to Cloudinary (compressed & chunked)
+      // 1. Direct Unsigned Upload (compressed & chunked)
       const uploadResults = await uploadMultipleToCloudinary(files, (curr, tot) => {
         setUploadProgress({ current: curr, total: tot });
       });
@@ -57,12 +57,11 @@ export default function AddProduct() {
       });
 
       if (!draftRes.ok) {
-        throw new Error("Failed to generate AI captions. Using local fallback.");
+        throw new Error("Unable to create drafts. Please check your network and try again.");
       }
 
       const drafts = await draftRes.json();
 
-      // Transform into editable staged items
       const newItems = drafts.map((d, idx) => ({
         id: Date.now() + idx,
         imageUrl: d.imageUrl,
@@ -74,9 +73,10 @@ export default function AddProduct() {
       }));
 
       setStagedProducts(newItems);
+      addToast(`${newItems.length} photos ready! Enter your asking price for each item.`, "success", 10000);
     } catch (err) {
       console.error(err);
-      setError(err.message || "Failed to process images. Please try again.");
+      addToast(err.message || "Failed to upload photos. Please check your internet connection.", "error", 12000);
     } finally {
       setIsUploading(false);
     }
@@ -104,12 +104,11 @@ export default function AddProduct() {
     // Validate that asking prices are provided
     const missingPrice = stagedProducts.some((p) => !p.askingPrice || Number(p.askingPrice) <= 0);
     if (missingPrice) {
-      setError("Please specify an Asking Price for every product before saving.");
+      addToast("Please fill in an Asking Price for all items before publishing.", "error", 12000);
       return;
     }
 
     setIsSaving(true);
-    setError("");
 
     try {
       const token = localStorage.getItem("kiosq_token");
@@ -136,13 +135,13 @@ export default function AddProduct() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to save products to database.");
+        throw new Error("Unable to save products to your dashboard. Please retry.");
       }
 
-      alert(`🎉 Successfully listed ${stagedProducts.length} products to your Kiosq!`);
+      addToast(`🎉 Successfully published ${stagedProducts.length} items to your Kiosq!`, "success", 10000);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message || "Error saving products.");
+      addToast(err.message || "Error saving products. Please try again.", "error", 12000);
     } finally {
       setIsSaving(false);
     }
@@ -162,29 +161,21 @@ export default function AddProduct() {
               <span>Back to Dashboard</span>
             </Link>
 
-            <span className="text-label-sm font-bold bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full flex items-center gap-1">
-              <span className="material-symbols-outlined text-[15px]">bolt</span>
-              Batch Photo Staging (Up to 20)
+            {/* Clean, Non-Technical Notice */}
+            <span className="text-label-sm font-bold text-on-surface-variant bg-surface-container px-3 py-1 rounded-full border border-surface-container-high">
+              Upload up to 20 images
             </span>
           </div>
 
           {/* Page Heading */}
           <div className="flex flex-col gap-1">
             <h1 className="text-headline-lg font-extrabold text-on-surface tracking-tight">
-              List Products with Photo Dump
+              List Products
             </h1>
             <p className="text-body-sm text-on-surface-variant max-w-xl">
-              Upload up to 20 images at once. Everything automatically arranges into ready-to-sell
-              cards while AI writes your titles and WhatsApp Status captions with direct checkout links.
+              Select your photos. We will arrange your items, write product titles, and generate WhatsApp Status captions with your checkout links.
             </p>
           </div>
-
-          {error && (
-            <div className="bg-error-container text-on-error-container p-3.5 rounded-DEFAULT text-body-sm font-semibold flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">error</span>
-              <span>{error}</span>
-            </div>
-          )}
 
           {/* Upload Dropzone (Visible when no staged items or uploading) */}
           {stagedProducts.length === 0 && (
@@ -212,7 +203,7 @@ export default function AddProduct() {
               {isUploading ? (
                 <div className="flex flex-col items-center gap-2">
                   <span className="text-headline-sm font-bold text-on-surface">
-                    Uploading &amp; Arranging {uploadProgress.current} of {uploadProgress.total}...
+                    Processing &amp; Arranging {uploadProgress.current} of {uploadProgress.total}...
                   </span>
                   <div className="w-48 h-2 bg-surface-container rounded-full overflow-hidden">
                     <div
@@ -223,7 +214,7 @@ export default function AddProduct() {
                     />
                   </div>
                   <span className="text-body-sm text-on-surface-variant">
-                    Uploading to Cloudinary &amp; generating AI captions...
+                    Preparing your photos &amp; generating WhatsApp captions...
                   </span>
                 </div>
               ) : (
@@ -232,8 +223,7 @@ export default function AddProduct() {
                     Drop up to 20 Photos Here
                   </span>
                   <p className="text-body-sm text-on-surface-variant max-w-sm">
-                    Select all products you want to post to your WhatsApp Status today. We compress
-                    and stage them instantly.
+                    Select the products you want to sell today. We stage them and generate WhatsApp links instantly.
                   </p>
                   <button
                     type="button"
@@ -251,9 +241,9 @@ export default function AddProduct() {
           {stagedProducts.length > 0 && (
             <div className="flex flex-col gap-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-surface-container p-3.5 rounded-DEFAULT border border-surface-container-high">
-                <span className="text-label-md font-bold text-on-surface flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse" />
-                  {stagedProducts.length} Items Arranged &amp; Ready for Pricing
+                {/* Clean counter label without glowing circle */}
+                <span className="text-label-md font-bold text-on-surface">
+                  {stagedProducts.length} items ready for pricing
                 </span>
 
                 <div className="flex items-center gap-2">
@@ -372,7 +362,7 @@ export default function AddProduct() {
                       {stagedProducts.length} Products Staged
                     </span>
                     <span className="text-xs text-on-surface-variant">
-                      AI captions &amp; WhatsApp checkout links generated
+                      WhatsApp checkout links prepared
                     </span>
                   </div>
 
@@ -404,7 +394,7 @@ export default function AddProduct() {
             </div>
           )}
 
-          {/* Detailed Product Editor Modal (Reuses the single-product view) */}
+          {/* Detailed Product Editor Modal */}
           {editingIndex !== null && stagedProducts[editingIndex] && (
             <div className="fixed inset-0 z-50 bg-primary/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
               <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto bg-surface-container-lowest rounded-DEFAULT border-2 border-primary shadow-[6px_6px_0px_#000000] p-6 flex flex-col gap-5">
