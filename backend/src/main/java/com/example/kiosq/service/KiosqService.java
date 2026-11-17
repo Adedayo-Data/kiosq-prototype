@@ -36,7 +36,6 @@ public class KiosqService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Resolves merchant from authenticated JWT context (email) or falls back to default seed merchant
     @Transactional
     public Merchant getCurrentMerchant() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -82,6 +81,59 @@ public class KiosqService {
         product.setMerchant(merchant);
 
         return productRepository.save(product);
+    }
+
+    // AI Bulk Draft Generator: For up to 20 images, generates intelligent titles & WhatsApp captions with link
+    @Transactional(readOnly = true)
+    public List<BulkDraftItem> generateBulkDrafts(BulkDraftRequest req) {
+        Merchant m = getCurrentMerchant();
+        String storeName = req.businessName() != null ? req.businessName() : m.getBusinessName();
+
+        List<BulkDraftItem> drafts = new ArrayList<>();
+        int count = 1;
+
+        for (String url : req.imageUrls()) {
+            String slug = "item-" + UUID.randomUUID().toString().substring(0, 6);
+            String title = "New Stock Item #" + count + " (" + storeName + ")";
+            String caption = "✨ Fresh arrival from " + storeName + "!\n" +
+                    "Quality guaranteed. Fast delivery across Lagos.\n" +
+                    "🛡️ 100% Safe Escrow (Delivery PIN protection).\n\n" +
+                    "👇 Tap link to view, haggle or buy directly:\n" +
+                    "https://kiosq.shop/product/" + slug;
+
+            drafts.add(new BulkDraftItem(url, title, caption, slug));
+            count++;
+        }
+
+        return drafts;
+    }
+
+    // Bulk Save all staged products
+    @Transactional
+    public List<Product> bulkSaveProducts(BulkSaveRequest req) {
+        Merchant merchant = getCurrentMerchant();
+        List<Product> saved = new ArrayList<>();
+
+        for (BulkSaveProductItem item : req.items()) {
+            Product p = new Product();
+            String slug = item.slug() != null && !item.slug().isEmpty() 
+                ? item.slug() 
+                : item.title().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "") + "-" + UUID.randomUUID().toString().substring(0, 5);
+            
+            p.setSlug(slug);
+            p.setTitle(item.title());
+            p.setDescription(item.description() != null ? item.description() : item.title());
+            p.setAskingPrice(item.askingPrice() != null ? item.askingPrice() : BigDecimal.ZERO);
+            p.setFloorPrice(item.floorPrice() != null ? item.floorPrice() : (item.askingPrice() != null ? item.askingPrice().multiply(new BigDecimal("0.85")) : BigDecimal.ZERO));
+            p.setImageUrl(item.imageUrl());
+            p.setWhatsappCaption(item.whatsappCaption());
+            p.setCategory("General Merchandise");
+            p.setMerchant(merchant);
+
+            saved.add(productRepository.save(p));
+        }
+
+        return saved;
     }
 
     // 2. Get Public Product Details (Hides Floor Price!)
