@@ -127,7 +127,7 @@ export default function SellerDashboard() {
             });
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, []);
 
@@ -173,13 +173,20 @@ export default function SellerDashboard() {
           {/* Top Welcome Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-surface-container-high">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center text-lg font-bold shadow-xs">
+              <Link
+                to="/profile"
+                className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center text-lg font-bold shadow-xs hover:ring-2 hover:ring-primary hover:scale-105 transition-all cursor-pointer shrink-0"
+                title="View Seller Profile"
+              >
                 {merchant?.businessName ? merchant.businessName.charAt(0).toUpperCase() : "M"}
-              </div>
+              </Link>
               <div className="flex flex-col">
-                <span className="text-label-sm text-on-surface-variant font-bold">
+                <Link
+                  to="/profile"
+                  className="text-label-sm text-on-surface-variant font-bold hover:underline"
+                >
                   {merchant?.businessName || "Mama Tola Textiles"}
-                </span>
+                </Link>
                 <h1 className="text-headline-lg font-extrabold text-on-surface">
                   E kaabo, {merchant?.fullName || "Chioma"} 👋
                 </h1>
@@ -187,6 +194,15 @@ export default function SellerDashboard() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              <Link
+                to="/transactions"
+                className="inline-flex items-center gap-1.5 bg-surface-container hover:bg-surface-container-high text-on-surface px-3.5 py-2.5 rounded-full text-label-sm font-bold transition-colors cursor-pointer"
+                title="View Transactions"
+              >
+                <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+                <span className="hidden sm:inline">Transactions</span>
+              </Link>
+
               <Link
                 to="/add-product"
                 className="inline-flex items-center gap-1.5 bg-primary text-on-primary px-4 py-2.5 rounded-full text-label-md font-bold hover:bg-neutral-800 transition-colors cursor-pointer shadow-xs"
@@ -222,18 +238,28 @@ export default function SellerDashboard() {
               </span>
             </div>
 
-            {/* In Escrow */}
-            <div className="bg-surface-container-lowest p-5 rounded-DEFAULT shadow-[2px_2px_0px_#000000] border-2 border-primary flex flex-col gap-1">
-              <span className="text-label-sm text-on-surface-variant font-bold uppercase">
-                Locked In Escrow
-              </span>
+            {/* In Escrow: Clicking opens Orders List (Requirement 4) */}
+            <Link
+              to="/orders"
+              className="bg-surface-container-lowest p-5 rounded-DEFAULT shadow-[2px_2px_0px_#000000] border-2 border-primary flex flex-col gap-1 hover:border-secondary transition-all cursor-pointer group"
+              title="View Escrow Orders & Delivery PINs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-label-sm text-on-surface-variant font-bold uppercase">
+                  Locked In Escrow
+                </span>
+                <span className="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-secondary group-hover:translate-x-0.5 transition-all">
+                  arrow_forward
+                </span>
+              </div>
               <span className="text-[28px] font-extrabold text-secondary tracking-tight">
                 ₦{metrics.escrowLocked}
               </span>
-              <span className="text-label-sm text-on-surface-variant font-medium">
-                {metrics.escrowOrdersCount} orders awaiting delivery PIN
+              <span className="text-label-sm text-secondary font-bold flex items-center gap-1 mt-1 group-hover:underline">
+                <span className="material-symbols-outlined text-[15px]">pin</span>
+                <span>{metrics.escrowOrdersCount} orders awaiting delivery PIN</span>
               </span>
-            </div>
+            </Link>
 
             {/* AI Deals Closed */}
             <div className="bg-surface-container-lowest p-5 rounded-DEFAULT shadow-[2px_2px_0px_#000000] border-2 border-primary flex flex-col gap-1">
@@ -258,11 +284,10 @@ export default function SellerDashboard() {
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
-                    className={`px-3 py-1 rounded-full capitalize transition-all cursor-pointer ${
-                      filter === f
-                        ? "bg-primary text-on-primary"
-                        : "text-on-surface hover:text-neutral-600"
-                    }`}
+                    className={`px-3 py-1 rounded-full capitalize transition-all cursor-pointer ${filter === f
+                      ? "bg-primary text-on-primary"
+                      : "text-on-surface hover:text-neutral-600"
+                      }`}
                   >
                     {f}
                   </button>
@@ -320,13 +345,12 @@ export default function SellerDashboard() {
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span
-                        className={`text-label-sm font-bold px-2.5 py-1 rounded-full ${
-                          item.status === "In Escrow"
-                            ? "bg-secondary-container text-on-secondary-container"
-                            : item.status === "Plug Locked"
+                        className={`text-label-sm font-bold px-2.5 py-1 rounded-full ${item.status === "In Escrow"
+                          ? "bg-secondary-container text-on-secondary-container"
+                          : item.status === "Plug Locked"
                             ? "bg-amber-100 text-amber-900"
                             : "bg-surface-container-high text-on-surface"
-                        }`}
+                          }`}
                       >
                         {item.status}
                       </span>

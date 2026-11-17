@@ -64,7 +64,7 @@ export default function AiNegotiationChat() {
         {
           id: Date.now() + 1,
           sender: "ai",
-          text: "Oya deal locked! ₦23,500 done set. I don hold this deal for you. Make you pay into Kiosq Escrow now so mama fit package am for rider immediately!",
+          text: "Oya deal locked! ₦23,500 done set. I don hold this deal for you. Make you pay into Kiosq Escrow now so mama fit package am for delivery person immediately!",
           time: "Just now",
           badge: "Deal Accepted • Escrow Unlocked",
         },

@@ -20,7 +20,7 @@ export default function HowItWorks() {
     {
       id: 4,
       title: "Instant Payout",
-      text: "Delivery is verified via rider code, and ₦ is wired directly to your Nigerian bank account within 3 minutes.",
+      text: "Delivery is verified via delivery person PIN, and ₦ is wired directly to your Nigerian bank account within 3 minutes.",
     },
   ];
 

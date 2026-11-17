@@ -17,9 +17,8 @@ export default function EscrowTrustSeal() {
       </h3>
 
       <p className="text-body-md sm:text-[16px] sm:leading-[24px] text-on-surface-variant max-w-xl">
-        Money is held securely in NDIC-insured partner deposit pools until physical delivery is
-        verified with a 4-digit PIN handoff, followed by an automatic 24-hour buyer inspection
-        window.
+        Your money is held in escrow until you confirm delivery with a 4-digit PIN handoff,
+        followed by an automatic 24-hour buyer inspection window.
       </p>
 
       {/* 3 Trust Badges Responsive Row */}

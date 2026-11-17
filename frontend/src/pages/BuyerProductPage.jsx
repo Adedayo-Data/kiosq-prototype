@@ -61,13 +61,25 @@ export default function BuyerProductPage() {
     navigate(`/haggle/${slug}?offer=${offerVal || selectedOffer}`);
   };
 
-  const displayImage = product?.imageUrl || FALLBACK_ANKARA_IMAGE;
   const displayTitle = product?.title || "Authentic Ankara Wax Print (6 Yards)";
   const displayPrice = product?.askingPrice
     ? `₦${Number(product.askingPrice).toLocaleString()}`
     : "₦28,000";
   const displayMerchant = product?.merchantName || "Mama Tola Textiles";
   const displayLocation = product?.merchantLocation || "Balogun Market, Lagos Island";
+
+  const sanitizedUrl = (product?.imageUrl && !product.imageUrl.includes("lh3.googleusercontent.com") && product.imageUrl.trim() !== "")
+    ? product.imageUrl
+    : FALLBACK_ANKARA_IMAGE;
+  const [imgSrc, setImgSrc] = useState(sanitizedUrl);
+
+  useEffect(() => {
+    if (product?.imageUrl && !product.imageUrl.includes("lh3.googleusercontent.com") && product.imageUrl.trim() !== "") {
+      setImgSrc(product.imageUrl);
+    } else {
+      setImgSrc(FALLBACK_ANKARA_IMAGE);
+    }
+  }, [product]);
 
   const handleShareWhatsApp = () => {
     const productUrl = window.location.href;
@@ -165,22 +177,23 @@ export default function BuyerProductPage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
             {/* Left Column: Product Gallery & Badges */}
             <div className="md:col-span-6 flex flex-col gap-4">
-              <div className="relative w-full rounded-DEFAULT bg-surface-container-lowest overflow-hidden shadow-xs border border-outline-variant/30">
+              <div className="relative w-full rounded-DEFAULT bg-surface-container overflow-hidden shadow-xs border border-outline-variant/30 min-h-[300px] sm:min-h-[380px] flex items-center justify-center">
                 <img
-                  src={displayImage}
+                  src={imgSrc}
                   alt={displayTitle}
-                  className="w-full h-80 sm:h-96 object-cover"
+                  onError={() => setImgSrc(FALLBACK_ANKARA_IMAGE)}
+                  className="w-full h-80 sm:h-96 object-cover block"
                 />
 
                 {/* Floating Tag */}
-                <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-primary/85 backdrop-blur-xs text-on-primary px-3 py-1 rounded-full text-label-sm font-bold">
+                <div className="absolute top-3 left-3 z-10 pointer-events-none flex items-center gap-1.5 bg-primary/90 backdrop-blur-xs text-on-primary px-3 py-1 rounded-full text-label-sm font-bold shadow-sm">
                   <span className="material-symbols-outlined text-[15px] text-secondary-container">
                     verified
                   </span>
                   <span>Verified by Kiosq</span>
                 </div>
 
-                <div className="absolute bottom-3 right-3 bg-surface/90 backdrop-blur-xs text-on-surface px-2.5 py-1 rounded-full text-label-sm font-bold shadow-xs">
+                <div className="absolute bottom-3 right-3 z-10 pointer-events-none bg-surface/90 backdrop-blur-xs text-on-surface px-2.5 py-1 rounded-full text-label-sm font-bold shadow-xs">
                   {product?.category || "Verified Merchandise"}
                 </div>
               </div>
@@ -252,8 +265,8 @@ export default function BuyerProductPage() {
               </div>
 
               {/* Merchant Profile Card */}
-              <div className="rounded-DEFAULT bg-surface-container-lowest p-4 shadow-xs border border-outline-variant/30 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div className="rounded-DEFAULT bg-surface-container-lowest p-4 shadow-xs border border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center shrink-0 text-primary">
                     <span className="material-symbols-outlined text-[26px]">storefront</span>
                   </div>
@@ -262,19 +275,19 @@ export default function BuyerProductPage() {
                       <h3 className="text-headline-sm text-on-surface truncate font-bold">
                         {displayMerchant}
                       </h3>
-                      <span className="material-symbols-outlined text-[16px] text-secondary">
+                      <span className="material-symbols-outlined text-[16px] text-secondary shrink-0">
                         check_circle
                       </span>
                     </div>
-                    <span className="text-body-sm text-on-surface-variant flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px]">location_on</span>
-                      {displayLocation}
+                    <span className="text-body-sm text-on-surface-variant flex items-center gap-1 truncate">
+                      <span className="material-symbols-outlined text-[14px] shrink-0">location_on</span>
+                      <span className="truncate">{displayLocation}</span>
                     </span>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span className="inline-flex items-center gap-1 text-label-sm font-bold text-on-surface bg-surface-container-high px-2.5 py-1 rounded-full">
+                <div className="shrink-0 self-start sm:self-center">
+                  <span className="inline-flex items-center gap-1 text-label-sm font-bold text-on-surface bg-surface-container-high px-2.5 py-1 rounded-full whitespace-nowrap">
                     ★ 4.9 (142 deals)
                   </span>
                 </div>
@@ -287,12 +300,10 @@ export default function BuyerProductPage() {
                     <span className="material-symbols-outlined text-[16px]">shield</span>
                     <span className="text-label-md font-bold">Kiosq SafeEscrow Protection</span>
                   </div>
-                  <span className="text-label-sm text-secondary font-bold">100% Risk Free</span>
+                  <span className="text-label-sm text-secondary font-bold whitespace-nowrap">Escrow Protected</span>
                 </div>
                 <p className="text-body-sm text-on-surface-variant leading-relaxed">
-                  Your funds are held securely until the rider arrives and you confirm receipt with
-                  your <strong>4-digit delivery PIN</strong>. 24-hour return guarantee if not as
-                  described.
+                  Your money is held in escrow until you confirm delivery with your <strong>4-digit delivery PIN</strong>. 24-hour return guarantee if not as described.
                 </p>
               </div>
 
@@ -361,25 +372,25 @@ export default function BuyerProductPage() {
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setIsOfferModalOpen(true)}
-                      className="flex-1 h-13 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface text-label-lg font-bold flex items-center justify-center gap-2 hover:bg-surface-container transition-colors cursor-pointer shadow-[2px_2px_0px_#000000]"
+                      className="flex-1 h-13 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface font-bold flex items-center justify-center gap-2 hover:bg-surface-container transition-colors cursor-pointer shadow-[2px_2px_0px_#000000] px-3 sm:px-4 text-sm sm:text-base min-w-0"
                       type="button"
                     >
-                      <span className="material-symbols-outlined text-[20px]">
+                      <span className="material-symbols-outlined text-[20px] shrink-0">
                         chat_bubble_outline
                       </span>
-                      <span>Make an Offer / Haggle</span>
+                      <span className="truncate">Make an Offer / Haggle</span>
                     </button>
 
                     <Link
                       to={`/escrow/order-${product?.id || "4821"}`}
-                      className="flex-1 h-13 rounded-full bg-primary text-on-primary text-label-lg font-bold flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer shadow-[2px_2px_0px_#000000]"
+                      className="flex-1 h-13 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer shadow-[2px_2px_0px_#000000] px-3 sm:px-4 text-sm sm:text-base min-w-0"
                     >
-                      <span className="material-symbols-outlined text-[20px]">lock</span>
-                      <span>Buy Now ({displayPrice})</span>
+                      <span className="material-symbols-outlined text-[20px] shrink-0">lock</span>
+                      <span className="truncate">Buy Now ({displayPrice})</span>
                     </Link>
                   </div>
                   <p className="text-xs text-center text-on-surface-variant">
-                    Protected by Kiosq Dual-Protection Escrow • Dispatched via local courier
+                    Your money is held in escrow until you confirm delivery.
                   </p>
                 </div>
               )}
@@ -389,9 +400,9 @@ export default function BuyerProductPage() {
       </main>
 
       {/* Mobile Sticky Bottom Action Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md px-4 py-3 border-t border-outline-variant/40 shadow-lg">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md px-3 sm:px-4 py-3 border-t border-outline-variant/40 shadow-lg">
         {isOwner ? (
-          <div className="max-w-md mx-auto flex items-center gap-3">
+          <div className="max-w-md mx-auto flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => {
                 setEditForm({
@@ -402,39 +413,39 @@ export default function BuyerProductPage() {
                 });
                 setIsEditModalOpen(true);
               }}
-              className="flex-1 h-12 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface text-label-md font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+              className="flex-1 h-12 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform text-xs sm:text-sm px-2 min-w-0"
               type="button"
             >
-              <span className="material-symbols-outlined text-[18px]">edit</span>
-              <span>Edit Listing</span>
+              <span className="material-symbols-outlined text-[18px] shrink-0">edit</span>
+              <span className="truncate">Edit Listing</span>
             </button>
 
             <button
               onClick={handleShareWhatsApp}
-              className="flex-1 h-12 rounded-full bg-[#25D366] text-white text-label-md font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-md"
+              className="flex-1 h-12 rounded-full bg-[#25D366] text-white font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform shadow-md text-xs sm:text-sm px-2 min-w-0"
               type="button"
             >
-              <span className="material-symbols-outlined text-[18px]">share</span>
-              <span>Share</span>
+              <span className="material-symbols-outlined text-[18px] shrink-0">share</span>
+              <span className="truncate">Share</span>
             </button>
           </div>
         ) : (
-          <div className="max-w-md mx-auto flex items-center gap-3">
+          <div className="max-w-md mx-auto flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setIsOfferModalOpen(true)}
-              className="flex-1 h-12 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface text-label-md font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+              className="flex-1 h-12 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform text-xs sm:text-sm px-2 min-w-0"
               type="button"
             >
-              <span className="material-symbols-outlined text-[18px]">chat_bubble_outline</span>
-              <span>Make Offer</span>
+              <span className="material-symbols-outlined text-[18px] shrink-0">chat_bubble_outline</span>
+              <span className="truncate">Make Offer</span>
             </button>
 
             <Link
               to={`/escrow/order-${product?.id || "4821"}`}
-              className="flex-1 h-12 rounded-full bg-primary text-on-primary text-label-md font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-md"
+              className="flex-1 h-12 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform shadow-md text-xs sm:text-sm px-2 min-w-0"
             >
-              <span className="material-symbols-outlined text-[18px]">lock</span>
-              <span>Buy ({displayPrice})</span>
+              <span className="material-symbols-outlined text-[18px] shrink-0">lock</span>
+              <span className="truncate">Buy Now ({displayPrice})</span>
             </Link>
           </div>
         )}

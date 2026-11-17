@@ -47,7 +47,7 @@ public class DataInitializer {
                 p.setAskingPrice(new BigDecimal("28000"));
                 p.setFloorPrice(new BigDecimal("23000"));
                 p.setCategory("Fashion & Fabrics");
-                p.setImageUrl("https://lh3.googleusercontent.com/aida-public/AB6AXuAKJfLOn4VRMScTfJqlEtJ9M39g70YXxZSSZ_RABRROV5nCaPrT3yV6Wq_Vl8zH-V3eJ4P-L1-mN3cZ4w-yC1IleipBYtXwlQXYnpWwU_RfpkZ-Xq7H98UQCRsDDdapHalEW4ppP5GV745cCobx5RsGWN-LNxGPBKqAb4Rn3eIuHpI0Z-yb4XeS-HkIc0S1898uDkibmN2nxznGb-CK-AZ6x8D");
+                p.setImageUrl("https://images.unsplash.com/photo-1590736704728-f4730bb30770?auto=format&fit=crop&w=800&q=80");
                 p.setWhatsappCaption("Original Hollandais Ankara 6 yards! Pay into Kiosq Escrow with your 4-digit PIN handoff.");
                 p.setMerchant(merchant);
                 productRepository.save(p);

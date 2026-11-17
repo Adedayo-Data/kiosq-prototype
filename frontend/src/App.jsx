@@ -8,6 +8,11 @@ import AiNegotiationChat from "./pages/AiNegotiationChat";
 import EscrowPaymentTracking from "./pages/EscrowPaymentTracking";
 import SellerDashboard from "./pages/SellerDashboard";
 import AddProduct from "./pages/AddProduct";
+import TransactionsPage from "./pages/TransactionsPage";
+import SellerProfile from "./pages/SellerProfile";
+import OrdersList from "./pages/OrdersList";
+import OrderDetail from "./pages/OrderDetail";
+import PublicHandoffPage from "./pages/PublicHandoffPage";
 
 export default function App() {
   return (
@@ -22,6 +27,11 @@ export default function App() {
           <Route path="/escrow/:orderId" element={<EscrowPaymentTracking />} />
           <Route path="/dashboard" element={<SellerDashboard />} />
           <Route path="/add-product" element={<AddProduct />} />
+          <Route path="/transactions" element={<TransactionsPage />} />
+          <Route path="/profile" element={<SellerProfile />} />
+          <Route path="/orders" element={<OrdersList />} />
+          <Route path="/orders/:orderId" element={<OrderDetail />} />
+          <Route path="/handoff/:orderId" element={<PublicHandoffPage />} />
         </Routes>
       </BrowserRouter>
     </ToastProvider>
