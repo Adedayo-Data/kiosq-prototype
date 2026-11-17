@@ -157,13 +157,13 @@ export default function BuyerProductPage() {
           <div className="flex items-center justify-between py-2 mb-3">
             <div className="flex items-center gap-3">
               <Link
-                to="/"
+                to="/dashboard"
                 className="inline-flex items-center gap-1.5 text-label-sm font-bold text-on-surface hover:text-neutral-600 transition-colors"
               >
                 <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-                <span>Back</span>
+                <span>Back to Dashboard</span>
               </Link>
-              <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+              <Link to="/dashboard" className="inline-flex items-center hover:opacity-90 transition-opacity">
                 <KiosqLogo className="h-10 sm:h-12 w-auto" />
               </Link>
             </div>
