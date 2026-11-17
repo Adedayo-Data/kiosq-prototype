@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useToast } from "../context/ToastContext";
-import { FALLBACK_ANKARA_IMAGE } from "../utils/constants";
+import { FALLBACK_ANKARA_IMAGE, API_BASE_URL } from "../utils/constants";
 
 export default function BuyerProductPage() {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ export default function BuyerProductPage() {
     }
 
     if (id) {
-      fetch(`http://localhost:8080/api/v1/products/${id}`)
+      fetch(`${API_BASE_URL}/api/v1/products/${id}`)
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data) {
@@ -116,7 +116,7 @@ export default function BuyerProductPage() {
     setIsSavingEdit(true);
     try {
       const token = localStorage.getItem("kiosq_token");
-      const res = await fetch(`http://localhost:8080/api/v1/products/${product.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/products/${product.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

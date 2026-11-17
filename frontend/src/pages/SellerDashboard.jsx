@@ -5,6 +5,7 @@ import {
   FALLBACK_ANKARA_IMAGE,
   FALLBACK_SNEAKERS_IMAGE,
   FALLBACK_BAG_IMAGE,
+  API_BASE_URL,
 } from "../utils/constants";
 
 export default function SellerDashboard() {
@@ -75,11 +76,11 @@ export default function SellerDashboard() {
     // Fetch Products from Backend (tries /products and fallback /merchant/products)
     const fetchProducts = async () => {
       try {
-        let res = await fetch("http://localhost:8080/api/v1/products", {
+        let res = await fetch(`${API_BASE_URL}/api/v1/products`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) {
-          res = await fetch("http://localhost:8080/api/v1/merchant/products", {
+          res = await fetch(`${API_BASE_URL}/api/v1/merchant/products`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
         }
@@ -113,7 +114,7 @@ export default function SellerDashboard() {
 
     // Fetch Metrics if authenticated
     if (token) {
-      fetch("http://localhost:8080/api/v1/dashboard/metrics", {
+      fetch(`${API_BASE_URL}/api/v1/dashboard/metrics`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => (res.ok ? res.json() : null))

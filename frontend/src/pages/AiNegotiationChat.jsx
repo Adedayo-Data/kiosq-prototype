@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { FALLBACK_ANKARA_IMAGE } from "../utils/constants";
+import { FALLBACK_ANKARA_IMAGE, API_BASE_URL } from "../utils/constants";
 
 export default function AiNegotiationChat() {
   const navigate = useNavigate();
@@ -11,7 +11,7 @@ export default function AiNegotiationChat() {
 
   useEffect(() => {
     if (id) {
-      fetch(`http://localhost:8080/api/v1/products/${id}`)
+      fetch(`${API_BASE_URL}/api/v1/products/${id}`)
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data) setProduct(data);

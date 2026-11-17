@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router";
 import { uploadMultipleToCloudinary } from "../utils/cloudinary";
 import { useToast } from "../context/ToastContext";
+import { API_BASE_URL } from "../utils/constants";
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export default function AddProduct() {
       const token = localStorage.getItem("kiosq_token");
       const merchantData = JSON.parse(localStorage.getItem("kiosq_merchant") || "{}");
 
-      const draftRes = await fetch("http://localhost:8080/api/v1/products/bulk-draft", {
+      const draftRes = await fetch(`${API_BASE_URL}/api/v1/products/bulk-draft`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -125,7 +126,7 @@ export default function AddProduct() {
         })),
       };
 
-      const res = await fetch("http://localhost:8080/api/v1/products/bulk-save", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/products/bulk-save`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
