@@ -17,7 +17,7 @@ export default function AiNegotiationChat() {
         .then((data) => {
           if (data) setProduct(data);
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [id]);
 
@@ -154,13 +154,12 @@ export default function AiNegotiationChat() {
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex flex-col max-w-[85%] ${
-                msg.sender === "buyer"
-                  ? "self-end items-end"
-                  : msg.sender === "system"
+              className={`flex flex-col max-w-[85%] ${msg.sender === "buyer"
+                ? "self-end items-end"
+                : msg.sender === "system"
                   ? "self-center items-center max-w-full my-2"
                   : "self-start items-start"
-              }`}
+                }`}
             >
               {msg.badge && (
                 <span className="text-[11px] font-bold text-secondary mb-1 flex items-center gap-1">
@@ -170,13 +169,12 @@ export default function AiNegotiationChat() {
               )}
 
               <div
-                className={`p-3.5 rounded-2xl text-body-md ${
-                  msg.sender === "buyer"
-                    ? "bg-primary text-on-primary rounded-br-xs shadow-xs"
-                    : msg.sender === "system"
+                className={`p-3.5 rounded-2xl text-body-md ${msg.sender === "buyer"
+                  ? "bg-primary text-on-primary rounded-br-xs shadow-xs"
+                  : msg.sender === "system"
                     ? "bg-secondary-container text-on-secondary-container font-bold text-center text-xs py-2 px-4 rounded-full"
                     : "bg-surface-container-lowest text-on-surface rounded-bl-xs shadow-xs border border-outline-variant/30"
-                }`}
+                  }`}
               >
                 {msg.text}
               </div>
