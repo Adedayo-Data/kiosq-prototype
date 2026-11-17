@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useToast } from "../context/ToastContext";
 import { FALLBACK_ANKARA_IMAGE, API_BASE_URL } from "../utils/constants";
+import KiosqLogo from "../components/KiosqLogo";
 
 export default function BuyerProductPage() {
   const navigate = useNavigate();
@@ -154,13 +155,18 @@ export default function BuyerProductPage() {
         <div className="flex flex-col w-full">
           {/* Top WhatsApp Origin Bar */}
           <div className="flex items-center justify-between py-2 mb-3">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 text-label-sm font-bold text-on-surface hover:text-neutral-600 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-              <span>Back</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-1.5 text-label-sm font-bold text-on-surface hover:text-neutral-600 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                <span>Back</span>
+              </Link>
+              <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+                <KiosqLogo className="h-8 w-auto" />
+              </Link>
+            </div>
 
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-[#25D366]/15 text-[#128C7E] px-2.5 py-1 rounded-full">

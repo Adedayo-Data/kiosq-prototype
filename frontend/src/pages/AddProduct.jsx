@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { uploadMultipleToCloudinary } from "../utils/cloudinary";
 import { useToast } from "../context/ToastContext";
 import { API_BASE_URL } from "../utils/constants";
+import KiosqLogo from "../components/KiosqLogo";
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -154,13 +155,18 @@ export default function AddProduct() {
         <div className="flex flex-col gap-6 w-full">
           {/* Header Bar */}
           <div className="flex items-center justify-between pb-3 border-b border-surface-container-high">
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center gap-1.5 text-label-sm font-bold text-on-surface hover:text-neutral-600 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-              <span>Back to Dashboard</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center gap-1.5 text-label-sm font-bold text-on-surface hover:text-neutral-600 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                <span>Dashboard</span>
+              </Link>
+              <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+                <KiosqLogo className="h-8 w-auto" />
+              </Link>
+            </div>
 
             {/* Clean, Non-Technical Notice */}
             <span className="text-label-sm font-bold text-on-surface-variant bg-surface-container px-3 py-1 rounded-full border border-surface-container-high">

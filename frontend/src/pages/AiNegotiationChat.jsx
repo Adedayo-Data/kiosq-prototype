@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { FALLBACK_ANKARA_IMAGE, API_BASE_URL } from "../utils/constants";
+import KiosqLogo from "../components/KiosqLogo";
 
 export default function AiNegotiationChat() {
   const navigate = useNavigate();
@@ -93,12 +94,17 @@ export default function AiNegotiationChat() {
       <main className="w-full max-w-2xl px-4 sm:px-6 py-4 flex flex-col h-[100dvh]">
         {/* Header Bar */}
         <div className="flex items-center justify-between pb-3 border-b border-surface-container-high shrink-0">
-          <Link
-            to="/product/ankara-wax"
-            className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors"
-          >
-            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-          </Link>
+          <div className="flex items-center gap-2.5">
+            <Link
+              to="/product/ankara-wax"
+              className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors"
+            >
+              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            </Link>
+            <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+              <KiosqLogo className="h-7 w-auto" />
+            </Link>
+          </div>
 
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-bold">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useToast } from "../context/ToastContext";
+import KiosqLogo from "../components/KiosqLogo";
 import {
   FALLBACK_ANKARA_IMAGE,
   FALLBACK_SNEAKERS_IMAGE,
@@ -171,8 +172,43 @@ export default function SellerDashboard() {
     <div className="bg-surface text-on-surface min-h-screen flex flex-col items-center">
       <main className="w-full max-w-5xl px-4 sm:px-6 lg:px-8 py-6 pb-20">
         <div className="flex flex-col gap-6 w-full">
-          {/* Top Welcome Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-surface-container-high">
+          {/* Top Brand Bar */}
+          <div className="flex items-center justify-between pb-3 border-b border-surface-container-high">
+            <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+              <KiosqLogo className="h-9 sm:h-10 w-auto" />
+            </Link>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Link
+                to="/transactions"
+                className="inline-flex items-center gap-1.5 bg-surface-container hover:bg-surface-container-high text-on-surface px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-label-sm font-bold transition-colors cursor-pointer"
+                title="View Transactions"
+              >
+                <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+                <span className="hidden sm:inline">Transactions</span>
+              </Link>
+
+              <Link
+                to="/add-product"
+                className="inline-flex items-center gap-1.5 bg-primary text-on-primary px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-label-sm font-bold hover:bg-neutral-800 transition-colors cursor-pointer shadow-xs"
+              >
+                <span className="material-symbols-outlined text-[18px]">add</span>
+                <span>List Item</span>
+              </Link>
+
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1 bg-surface-container text-on-surface hover:bg-surface-container-high px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-label-sm font-bold transition-colors cursor-pointer"
+                title="Sign Out"
+              >
+                <span className="material-symbols-outlined text-[18px]">logout</span>
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Welcome Merchant Strip */}
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Link
                 to="/profile"
@@ -192,34 +228,6 @@ export default function SellerDashboard() {
                   E kaabo, {merchant?.fullName || "Chioma"} 👋
                 </h1>
               </div>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Link
-                to="/transactions"
-                className="inline-flex items-center gap-1.5 bg-surface-container hover:bg-surface-container-high text-on-surface px-3.5 py-2.5 rounded-full text-label-sm font-bold transition-colors cursor-pointer"
-                title="View Transactions"
-              >
-                <span className="material-symbols-outlined text-[18px]">receipt_long</span>
-                <span className="hidden sm:inline">Transactions</span>
-              </Link>
-
-              <Link
-                to="/add-product"
-                className="inline-flex items-center gap-1.5 bg-primary text-on-primary px-4 py-2.5 rounded-full text-label-md font-bold hover:bg-neutral-800 transition-colors cursor-pointer shadow-xs"
-              >
-                <span className="material-symbols-outlined text-[18px]">add</span>
-                <span>List Item</span>
-              </Link>
-
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center gap-1 bg-surface-container text-on-surface hover:bg-surface-container-high px-3.5 py-2.5 rounded-full text-label-sm font-bold transition-colors cursor-pointer"
-                title="Sign Out"
-              >
-                <span className="material-symbols-outlined text-[18px]">logout</span>
-                <span className="hidden sm:inline">Logout</span>
-              </button>
             </div>
           </div>
 

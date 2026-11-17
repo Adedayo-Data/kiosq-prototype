@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useParams } from "react-router";
 import { useToast } from "../context/ToastContext";
 import { getOrderById, updateOrder } from "../utils/orderStorage";
+import KiosqLogo from "../components/KiosqLogo";
 
 export default function OrderDetail() {
   const { orderId } = useParams();
@@ -173,13 +174,18 @@ export default function OrderDetail() {
         <div className="flex flex-col gap-6 w-full">
           {/* Top Bar */}
           <div className="flex items-center justify-between pb-3 border-b border-surface-container-high">
-            <Link
-              to="/orders"
-              className="inline-flex items-center gap-1.5 text-label-sm font-bold text-on-surface hover:text-neutral-600 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-              <span>Back to Orders</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/orders"
+                className="inline-flex items-center gap-1.5 text-label-sm font-bold text-on-surface hover:text-neutral-600 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                <span>Orders</span>
+              </Link>
+              <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+                <KiosqLogo className="h-8 w-auto" />
+              </Link>
+            </div>
 
             <span className="font-mono text-xs font-bold bg-surface-container px-3 py-1 rounded-full text-on-surface">
               {order.orderReference}

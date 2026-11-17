@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { useToast } from "../context/ToastContext";
 import { getOrderById, updateOrder } from "../utils/orderStorage";
+import KiosqLogo from "../components/KiosqLogo";
 
 export default function EscrowPaymentTracking() {
   const { orderId } = useParams();
@@ -124,13 +125,18 @@ export default function EscrowPaymentTracking() {
         <div className="flex flex-col gap-6 w-full">
           {/* Header */}
           <div className="flex items-center justify-between pb-2 border-b border-surface-container-high">
-            <Link
-              to="/product/ankara-wax"
-              className="inline-flex items-center gap-1.5 text-label-sm font-bold text-on-surface hover:text-neutral-600 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-              <span>Back</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/product/ankara-wax"
+                className="inline-flex items-center gap-1.5 text-label-sm font-bold text-on-surface hover:text-neutral-600 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                <span>Back</span>
+              </Link>
+              <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+                <KiosqLogo className="h-8 w-auto" />
+              </Link>
+            </div>
 
             <span className="text-label-sm font-bold bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full flex items-center gap-1">
               <span className="material-symbols-outlined text-[15px]">verified</span>
