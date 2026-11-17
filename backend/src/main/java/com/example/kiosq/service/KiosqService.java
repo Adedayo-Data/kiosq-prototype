@@ -162,12 +162,35 @@ public class KiosqService {
         map.put("title", p.getTitle());
         map.put("description", p.getDescription());
         map.put("askingPrice", p.getAskingPrice());
+        map.put("floorPrice", p.getFloorPrice());
         map.put("imageUrl", p.getImageUrl());
         map.put("whatsappCaption", p.getWhatsappCaption());
+        map.put("merchantId", p.getMerchant().getId());
         map.put("merchantName", p.getMerchant().getBusinessName());
         map.put("merchantLocation", p.getMerchant().getMarketLocation());
         map.put("merchantVerified", p.getMerchant().isVerified());
         return map;
+    }
+
+    // Update Product Details (Owner only)
+    @Transactional
+    public Product updateProduct(Long id, UpdateProductRequest req) {
+        Merchant merchant = getCurrentMerchant();
+        Product p = productRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+
+        if (!p.getMerchant().getId().equals(merchant.getId())) {
+            throw new RuntimeException("Unauthorized: You do not own this product listing.");
+        }
+
+        if (req.title() != null && !req.title().isBlank()) p.setTitle(req.title());
+        if (req.askingPrice() != null) p.setAskingPrice(req.askingPrice());
+        if (req.floorPrice() != null) p.setFloorPrice(req.floorPrice());
+        if (req.description() != null) p.setDescription(req.description());
+        if (req.whatsappCaption() != null) p.setWhatsappCaption(req.whatsappCaption());
+        if (req.imageUrl() != null && !req.imageUrl().isBlank()) p.setImageUrl(req.imageUrl());
+
+        return productRepository.save(p);
     }
 
     // 3. AI Haggling Negotiation Engine

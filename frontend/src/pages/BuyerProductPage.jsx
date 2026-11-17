@@ -1,16 +1,34 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import { useToast } from "../context/ToastContext";
 import { FALLBACK_ANKARA_IMAGE } from "../utils/constants";
 
 export default function BuyerProductPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { addToast } = useToast();
   const [product, setProduct] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState("25500");
   const [customOffer, setCustomOffer] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    askingPrice: "",
+    floorPrice: "",
+    whatsappCaption: "",
+  });
 
   useEffect(() => {
+    const stored = localStorage.getItem("kiosq_merchant");
+    if (stored) {
+      try {
+        setCurrentUser(JSON.parse(stored));
+      } catch (e) {}
+    }
+
     if (id) {
       fetch(`http://localhost:8080/api/v1/products/${id}`)
         .then((res) => (res.ok ? res.json() : null))
@@ -27,6 +45,17 @@ export default function BuyerProductPage() {
     }
   }, [id]);
 
+  const isOwner = Boolean(
+    currentUser &&
+      product &&
+      (
+        (product.merchantId && String(currentUser.id) === String(product.merchantId)) ||
+        (product.merchantName && currentUser.businessName && 
+          product.merchantName.trim().toLowerCase() === currentUser.businessName.trim().toLowerCase()) ||
+        (currentUser.email === "tola@kiosq.africa" && (product.merchantName?.includes("Mama Tola") || !product.merchantName))
+      )
+  );
+
   const handleStartHaggle = (offerVal) => {
     const slug = product?.slug || id || "ankara-wax";
     navigate(`/haggle/${slug}?offer=${offerVal || selectedOffer}`);
@@ -39,6 +68,73 @@ export default function BuyerProductPage() {
     : "₦28,000";
   const displayMerchant = product?.merchantName || "Mama Tola Textiles";
   const displayLocation = product?.merchantLocation || "Balogun Market, Lagos Island";
+
+  const handleShareWhatsApp = () => {
+    const productUrl = window.location.href;
+    const text = product?.whatsappCaption
+      ? `${product.whatsappCaption}\n\n👉 Pay or Haggle Safely: ${productUrl}`
+      : `🔥 ${displayTitle} • ${displayPrice}\nProtected by Kiosq Escrow: ${productUrl}`;
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      addToast(
+        "WhatsApp share card & link copied to clipboard! Paste directly into your status or chat.",
+        "success",
+        10000
+      );
+    } else {
+      addToast(`Share link: ${productUrl}`, "info", 10000);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!product?.id) {
+      setProduct((prev) => ({
+        ...prev,
+        title: editForm.title || displayTitle,
+        askingPrice: editForm.askingPrice || "28000",
+        floorPrice: editForm.floorPrice || "23000",
+        whatsappCaption: editForm.whatsappCaption,
+      }));
+      addToast("Listing details updated!", "success", 10000);
+      setIsEditModalOpen(false);
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      const token = localStorage.getItem("kiosq_token");
+      const res = await fetch(`http://localhost:8080/api/v1/products/${product.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          title: editForm.title,
+          askingPrice: Number(editForm.askingPrice),
+          floorPrice: Number(editForm.floorPrice),
+          whatsappCaption: editForm.whatsappCaption,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Could not update listing on server.");
+      const updated = await res.json();
+      setProduct((prev) => ({
+        ...prev,
+        title: updated.title,
+        askingPrice: updated.askingPrice,
+        floorPrice: updated.floorPrice,
+        whatsappCaption: updated.whatsappCaption,
+      }));
+      addToast("Listing updated successfully!", "success", 10000);
+      setIsEditModalOpen(false);
+    } catch (err) {
+      addToast(err.message || "Failed to update listing.", "error", 12000);
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   return (
     <div className="bg-surface text-on-surface min-h-screen flex flex-col items-center">
@@ -200,32 +296,93 @@ export default function BuyerProductPage() {
                 </p>
               </div>
 
-              {/* Desktop Direct Action Buttons */}
-              <div className="hidden md:flex flex-col gap-3 pt-2">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setIsOfferModalOpen(true)}
-                    className="flex-1 h-13 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface text-label-lg font-bold flex items-center justify-center gap-2 hover:bg-surface-container transition-colors cursor-pointer"
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      chat_bubble_outline
+              {/* Action Buttons: Conditional based on whether viewer is Owner or Buyer */}
+              {isOwner ? (
+                <div className="flex flex-col gap-3 pt-2">
+                  {/* Owner View Status Card */}
+                  <div className="bg-surface-container-high/60 border-2 border-primary/20 rounded-DEFAULT p-3.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center">
+                        <span className="material-symbols-outlined text-[18px]">storefront</span>
+                      </div>
+                      <div>
+                        <span className="text-label-md font-bold text-on-surface block leading-tight">
+                          You are viewing your own Kiosq listing
+                        </span>
+                        <span className="text-body-sm text-on-surface-variant text-xs">
+                          Buyers see Haggle and Escrow Purchase buttons here
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-label-sm font-bold bg-primary text-on-primary px-3 py-1 rounded-full text-xs">
+                      Owner View
                     </span>
-                    <span>Make an Offer / Haggle</span>
-                  </button>
+                  </div>
+
+                  {/* Desktop Owner Action Buttons */}
+                  <div className="hidden md:flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        setEditForm({
+                          title: product?.title || displayTitle,
+                          askingPrice: product?.askingPrice || "28000",
+                          floorPrice: product?.floorPrice || "23000",
+                          whatsappCaption: product?.whatsappCaption || "",
+                        });
+                        setIsEditModalOpen(true);
+                      }}
+                      className="flex-1 h-13 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface text-label-lg font-bold flex items-center justify-center gap-2 hover:bg-surface-container transition-colors cursor-pointer shadow-[2px_2px_0px_#000000]"
+                      type="button"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">edit</span>
+                      <span>Edit Listing</span>
+                    </button>
+
+                    <button
+                      onClick={handleShareWhatsApp}
+                      className="flex-1 h-13 rounded-full bg-[#25D366] text-white text-label-lg font-bold flex items-center justify-center gap-2 hover:bg-[#1ebd59] transition-colors cursor-pointer shadow-[2px_2px_0px_#000000]"
+                      type="button"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">share</span>
+                      <span>Share to WhatsApp</span>
+                    </button>
+                  </div>
 
                   <Link
-                    to="/escrow/order-4821"
-                    className="flex-1 h-13 rounded-full bg-primary text-on-primary text-label-lg font-bold flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer shadow-md"
+                    to="/dashboard"
+                    className="text-label-sm font-bold text-on-surface-variant hover:text-on-surface text-center flex items-center justify-center gap-1.5 py-1"
                   >
-                    <span className="material-symbols-outlined text-[20px]">lock</span>
-                    <span>Buy Now (₦28,000)</span>
+                    <span className="material-symbols-outlined text-[16px]">dashboard</span>
+                    <span>Back to Seller Dashboard</span>
                   </Link>
                 </div>
-                <p className="text-xs text-center text-on-surface-variant">
-                  Protected by Kiosq Dual-Protection Escrow • Dispatched via local courier
-                </p>
-              </div>
+              ) : (
+                <div className="hidden md:flex flex-col gap-3 pt-2">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setIsOfferModalOpen(true)}
+                      className="flex-1 h-13 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface text-label-lg font-bold flex items-center justify-center gap-2 hover:bg-surface-container transition-colors cursor-pointer shadow-[2px_2px_0px_#000000]"
+                      type="button"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        chat_bubble_outline
+                      </span>
+                      <span>Make an Offer / Haggle</span>
+                    </button>
+
+                    <Link
+                      to={`/escrow/order-${product?.id || "4821"}`}
+                      className="flex-1 h-13 rounded-full bg-primary text-on-primary text-label-lg font-bold flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer shadow-[2px_2px_0px_#000000]"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">lock</span>
+                      <span>Buy Now ({displayPrice})</span>
+                    </Link>
+                  </div>
+                  <p className="text-xs text-center text-on-surface-variant">
+                    Protected by Kiosq Dual-Protection Escrow • Dispatched via local courier
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -233,25 +390,143 @@ export default function BuyerProductPage() {
 
       {/* Mobile Sticky Bottom Action Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md px-4 py-3 border-t border-outline-variant/40 shadow-lg">
-        <div className="max-w-md mx-auto flex items-center gap-3">
-          <button
-            onClick={() => setIsOfferModalOpen(true)}
-            className="flex-1 h-12 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface text-label-md font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-[18px]">chat_bubble_outline</span>
-            <span>Make Offer</span>
-          </button>
+        {isOwner ? (
+          <div className="max-w-md mx-auto flex items-center gap-3">
+            <button
+              onClick={() => {
+                setEditForm({
+                  title: product?.title || displayTitle,
+                  askingPrice: product?.askingPrice || "28000",
+                  floorPrice: product?.floorPrice || "23000",
+                  whatsappCaption: product?.whatsappCaption || "",
+                });
+                setIsEditModalOpen(true);
+              }}
+              className="flex-1 h-12 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface text-label-md font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+              type="button"
+            >
+              <span className="material-symbols-outlined text-[18px]">edit</span>
+              <span>Edit Listing</span>
+            </button>
 
-          <Link
-            to="/escrow/order-4821"
-            className="flex-1 h-12 rounded-full bg-primary text-on-primary text-label-md font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-md"
-          >
-            <span className="material-symbols-outlined text-[18px]">lock</span>
-            <span>Buy (₦28,000)</span>
-          </Link>
-        </div>
+            <button
+              onClick={handleShareWhatsApp}
+              className="flex-1 h-12 rounded-full bg-[#25D366] text-white text-label-md font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-md"
+              type="button"
+            >
+              <span className="material-symbols-outlined text-[18px]">share</span>
+              <span>Share</span>
+            </button>
+          </div>
+        ) : (
+          <div className="max-w-md mx-auto flex items-center gap-3">
+            <button
+              onClick={() => setIsOfferModalOpen(true)}
+              className="flex-1 h-12 rounded-full bg-surface-container-lowest border-2 border-primary text-on-surface text-label-md font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+              type="button"
+            >
+              <span className="material-symbols-outlined text-[18px]">chat_bubble_outline</span>
+              <span>Make Offer</span>
+            </button>
+
+            <Link
+              to={`/escrow/order-${product?.id || "4821"}`}
+              className="flex-1 h-12 rounded-full bg-primary text-on-primary text-label-md font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-md"
+            >
+              <span className="material-symbols-outlined text-[18px]">lock</span>
+              <span>Buy ({displayPrice})</span>
+            </Link>
+          </div>
+        )}
       </div>
+
+      {/* Owner Edit Product Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 bg-primary/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="w-full max-w-lg bg-surface-container-lowest rounded-DEFAULT border-2 border-primary shadow-[6px_6px_0px_#000000] p-6 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-surface-container-high">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px] text-primary">edit</span>
+                <h3 className="text-headline-sm font-bold text-on-surface">Edit Product Listing</h3>
+              </div>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3.5">
+              <div className="flex flex-col gap-1">
+                <label className="text-label-sm font-bold text-on-surface uppercase">Title</label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                  className="w-full h-11 px-3.5 rounded-DEFAULT bg-surface-container-low border border-outline-variant text-body-md font-bold text-on-surface focus:outline-primary"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-label-sm font-bold text-on-surface uppercase">Asking Price (₦)</label>
+                  <input
+                    type="number"
+                    value={editForm.askingPrice}
+                    onChange={(e) => setEditForm((f) => ({ ...f, askingPrice: e.target.value }))}
+                    className="w-full h-11 px-3.5 rounded-DEFAULT bg-surface-container-low border border-outline-variant text-headline-sm font-bold text-on-surface focus:outline-primary"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-label-sm font-bold text-secondary uppercase flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">lock</span>
+                    Floor Price (₦)
+                  </label>
+                  <input
+                    type="number"
+                    value={editForm.floorPrice}
+                    onChange={(e) => setEditForm((f) => ({ ...f, floorPrice: e.target.value }))}
+                    className="w-full h-11 px-3.5 rounded-DEFAULT bg-surface-container-low border-2 border-secondary text-headline-sm font-bold text-secondary focus:outline-secondary"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1 bg-surface-container-low p-3 rounded-DEFAULT border border-outline-variant/40">
+                <label className="text-label-sm font-bold text-on-surface uppercase flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
+                  WhatsApp Caption &amp; Link
+                </label>
+                <textarea
+                  rows={4}
+                  value={editForm.whatsappCaption}
+                  onChange={(e) => setEditForm((f) => ({ ...f, whatsappCaption: e.target.value }))}
+                  className="w-full p-2.5 rounded-md bg-surface-container-lowest border border-outline-variant text-body-sm text-on-surface focus:outline-primary resize-none mt-1"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-5 h-11 rounded-full bg-surface-container text-on-surface text-label-md font-bold hover:bg-surface-container-high transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                disabled={isSavingEdit}
+                className="px-6 h-11 rounded-full bg-primary text-on-primary text-label-md font-bold hover:bg-neutral-800 transition-colors cursor-pointer shadow-[2px_2px_0px_#000000] disabled:opacity-60"
+              >
+                {isSavingEdit ? "Saving Changes..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Offer Negotiation Modal */}
       {isOfferModalOpen && (

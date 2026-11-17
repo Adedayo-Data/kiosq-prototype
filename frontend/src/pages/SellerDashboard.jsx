@@ -72,36 +72,44 @@ export default function SellerDashboard() {
 
     const token = localStorage.getItem("kiosq_token");
 
-    // Fetch Products from Backend
-    fetch("http://localhost:8080/api/v1/products", {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && Array.isArray(data) && data.length > 0) {
-          const mapped = data.map((p) => ({
-            id: p.id,
-            slug: p.slug,
-            name: p.title,
-            price: `₦${Number(p.askingPrice).toLocaleString()}`,
-            floor: `₦${Number(p.floorPrice).toLocaleString()}`,
-            status: "Active",
-            views: p.viewCount || 0,
-            offers: p.offerCount || 0,
-            image: p.imageUrl || FALLBACK_ANKARA_IMAGE,
-            whatsappCaption: p.whatsappCaption,
-          }));
-          setProducts(mapped);
-        } else {
-          setProducts(fallbackProducts);
+    // Fetch Products from Backend (tries /products and fallback /merchant/products)
+    const fetchProducts = async () => {
+      try {
+        let res = await fetch("http://localhost:8080/api/v1/products", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) {
+          res = await fetch("http://localhost:8080/api/v1/merchant/products", {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
         }
-      })
-      .catch(() => {
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const mapped = data.map((p) => ({
+              id: p.id,
+              slug: p.slug,
+              name: p.title,
+              price: `₦${Number(p.askingPrice).toLocaleString()}`,
+              floor: `₦${Number(p.floorPrice).toLocaleString()}`,
+              status: "Active",
+              views: p.viewCount || 0,
+              offers: p.offerCount || 0,
+              image: p.imageUrl || FALLBACK_ANKARA_IMAGE,
+              whatsappCaption: p.whatsappCaption,
+            }));
+            setProducts(mapped);
+            return;
+          }
+        }
         setProducts(fallbackProducts);
-      })
-      .finally(() => {
+      } catch (err) {
+        setProducts(fallbackProducts);
+      } finally {
         setIsLoading(false);
-      });
+      }
+    };
+    fetchProducts();
 
     // Fetch Metrics if authenticated
     if (token) {

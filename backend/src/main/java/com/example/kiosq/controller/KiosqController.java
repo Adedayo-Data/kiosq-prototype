@@ -21,7 +21,7 @@ public class KiosqController {
     }
 
     // 1. Get Logged-in Merchant's Products for Dashboard
-    @GetMapping("/products")
+    @GetMapping({"/products", "/merchant/products"})
     public ResponseEntity<List<Product>> getMerchantProducts() {
         return ResponseEntity.ok(kiosqService.getMerchantProducts());
     }
@@ -30,6 +30,12 @@ public class KiosqController {
     @PostMapping("/products")
     public ResponseEntity<Product> createProduct(@RequestBody CreateProductRequest req) {
         return ResponseEntity.ok(kiosqService.createProduct(req));
+    }
+
+    // 2b. Update Product Listing (Owner only)
+    @PutMapping("/products/{id}")
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody UpdateProductRequest req) {
+        return ResponseEntity.ok(kiosqService.updateProduct(id, req));
     }
 
     // 3. Generate Bulk AI Titles & Captions with WhatsApp link for up to 20 images

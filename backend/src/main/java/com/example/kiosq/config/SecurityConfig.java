@@ -77,6 +77,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
+                // Error dispatch
+                .requestMatchers("/error").permitAll()
+
                 // 1. Auth endpoints
                 .requestMatchers("/api/v1/auth/**").permitAll()
 
@@ -91,7 +94,10 @@ public class SecurityConfig {
 
                 // 4. Protected Seller Management Endpoints (Require Bearer Token)
                 .requestMatchers(HttpMethod.GET, "/api/v1/products").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/merchant/products").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/products").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/products/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").authenticated()
                 .requestMatchers("/api/v1/dashboard/**").authenticated()
 
                 .anyRequest().authenticated()
