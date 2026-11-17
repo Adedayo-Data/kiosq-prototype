@@ -1,15 +1,17 @@
+import { Link } from "react-router";
+
 export default function HeroSection() {
   return (
     <section className="flex flex-col gap-6 md:gap-8 relative pt-2">
       {/* Brand Header: New Logo + Tactical Chat Doodle */}
       <div className="flex justify-between items-center">
-        <a href="/" className="inline-flex items-center">
+        <Link to="/" className="inline-flex items-center">
           <img
             src="/kiosq-logo.png"
             alt="Kiosq - Chat Commerce"
             className="h-10 sm:h-12 md:h-14 w-auto object-contain"
           />
-        </a>
+        </Link>
 
         <div className="flex items-center gap-2">
           <span className="hidden md:inline-block text-label-sm text-on-surface-variant font-semibold">
@@ -63,13 +65,13 @@ export default function HeroSection() {
           {/* CTA & Curled Doodle Arrow */}
           <div className="flex flex-col gap-2 pt-1 relative max-w-md">
             <div className="relative flex items-center">
-              <button
+              <Link
+                to="/signup"
                 className="w-full sm:w-auto sm:px-8 bg-primary text-on-primary text-headline-sm py-4 px-6 rounded-full flex items-center justify-center gap-2 active:scale-[0.98] hover:bg-neutral-800 transition-all cursor-pointer shadow-md"
-                type="button"
               >
                 <span>Open your Kiosq</span>
                 <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-              </button>
+              </Link>
             </div>
 
             {/* Curled Hand-Drawn Ink Arrow Label */}

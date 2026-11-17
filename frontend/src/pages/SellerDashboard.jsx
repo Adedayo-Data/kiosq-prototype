@@ -1,8 +1,27 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router";
 
 export default function SellerDashboard() {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
+  const [merchant, setMerchant] = useState(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("kiosq_merchant");
+    if (stored) {
+      try {
+        setMerchant(JSON.parse(stored));
+      } catch (e) {
+        // Fallback
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("kiosq_token");
+    localStorage.removeItem("kiosq_merchant");
+    navigate("/login");
+  };
 
   const products = [
     {
@@ -45,36 +64,45 @@ export default function SellerDashboard() {
       <main className="w-full max-w-5xl px-4 sm:px-6 lg:px-8 py-6 pb-20">
         <div className="flex flex-col gap-6 w-full">
           {/* Top Welcome Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-surface-container-high">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center text-lg font-bold">
-                C
+              <div className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center text-lg font-bold shadow-xs">
+                {merchant?.businessName ? merchant.businessName.charAt(0).toUpperCase() : "M"}
               </div>
               <div className="flex flex-col">
                 <span className="text-label-sm text-on-surface-variant font-bold">
-                  Mama Tola Textiles
+                  {merchant?.businessName || "Mama Tola Textiles"}
                 </span>
                 <h1 className="text-headline-lg font-extrabold text-on-surface">
-                  E kaabo, Chioma 👋
+                  E kaabo, {merchant?.fullName || "Chioma"} 👋
                 </h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 to="/add-product"
-                className="inline-flex items-center gap-1.5 bg-primary text-on-primary px-4 py-2.5 rounded-full text-label-md font-bold hover:bg-neutral-800 transition-colors cursor-pointer shadow-sm"
+                className="inline-flex items-center gap-1.5 bg-primary text-on-primary px-4 py-2.5 rounded-full text-label-md font-bold hover:bg-neutral-800 transition-colors cursor-pointer shadow-xs"
               >
                 <span className="material-symbols-outlined text-[18px]">add</span>
-                <span>List New Item</span>
+                <span>List Item</span>
               </Link>
+
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1 bg-surface-container text-on-surface hover:bg-surface-container-high px-3.5 py-2.5 rounded-full text-label-sm font-bold transition-colors cursor-pointer"
+                title="Sign Out"
+              >
+                <span className="material-symbols-outlined text-[18px]">logout</span>
+                <span className="hidden sm:inline">Logout</span>
+              </button>
             </div>
           </div>
 
           {/* Metric Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Total Balance */}
-            <div className="bg-surface-container-lowest p-5 rounded-DEFAULT shadow-xs border border-outline-variant/30 flex flex-col gap-1">
+            <div className="bg-surface-container-lowest p-5 rounded-DEFAULT shadow-[2px_2px_0px_#000000] border-2 border-primary flex flex-col gap-1">
               <span className="text-label-sm text-on-surface-variant font-bold uppercase">
                 Available Payout
               </span>
@@ -88,7 +116,7 @@ export default function SellerDashboard() {
             </div>
 
             {/* In Escrow */}
-            <div className="bg-surface-container-lowest p-5 rounded-DEFAULT shadow-xs border border-outline-variant/30 flex flex-col gap-1">
+            <div className="bg-surface-container-lowest p-5 rounded-DEFAULT shadow-[2px_2px_0px_#000000] border-2 border-primary flex flex-col gap-1">
               <span className="text-label-sm text-on-surface-variant font-bold uppercase">
                 Locked In Escrow
               </span>
@@ -101,7 +129,7 @@ export default function SellerDashboard() {
             </div>
 
             {/* AI Deals Closed */}
-            <div className="bg-surface-container-lowest p-5 rounded-DEFAULT shadow-xs border border-outline-variant/30 flex flex-col gap-1">
+            <div className="bg-surface-container-lowest p-5 rounded-DEFAULT shadow-[2px_2px_0px_#000000] border-2 border-primary flex flex-col gap-1">
               <span className="text-label-sm text-on-surface-variant font-bold uppercase">
                 AI Haggler Auto-Closes
               </span>
@@ -140,7 +168,7 @@ export default function SellerDashboard() {
               {products.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-surface-container-lowest p-4 rounded-DEFAULT shadow-xs border border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary/40 transition-all"
+                  className="bg-surface-container-lowest p-4 rounded-DEFAULT shadow-xs border-2 border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary transition-all"
                 >
                   <div className="flex items-center gap-3">
                     <img
@@ -175,7 +203,7 @@ export default function SellerDashboard() {
 
                     <button
                       onClick={() => alert(`Copied WhatsApp share card for: ${item.name}`)}
-                      className="inline-flex items-center gap-1 bg-[#25D366] text-white text-label-sm font-bold px-3 py-1.5 rounded-full hover:bg-[#1ebd59] transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 bg-[#25D366] text-white text-label-sm font-bold px-3 py-1.5 rounded-full hover:bg-[#1ebd59] transition-colors cursor-pointer shadow-xs"
                     >
                       <span className="material-symbols-outlined text-[16px]">share</span>
                       <span>Status</span>

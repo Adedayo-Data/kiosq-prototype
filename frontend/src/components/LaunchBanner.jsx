@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 export default function LaunchBanner() {
   return (
     <section
@@ -18,13 +20,13 @@ export default function LaunchBanner() {
       </div>
 
       <div className="flex flex-col gap-2 sm:min-w-[240px]">
-        <button
+        <Link
+          to="/signup"
           className="w-full bg-surface text-on-surface text-headline-sm py-4 px-8 rounded-full flex items-center justify-center gap-2 active:scale-[0.98] hover:bg-white transition-all cursor-pointer font-bold shadow-md"
-          type="button"
         >
           <span>Create My Free Kiosq</span>
           <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-        </button>
+        </Link>
 
         {/* Hand-Drawn Doodle Note */}
         <div className="flex items-center justify-center gap-1.5 pt-1 text-primary-fixed">
