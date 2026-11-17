@@ -1,16 +1,13 @@
 import { Link } from "react-router";
+import KiosqLogo from "./KiosqLogo";
 
 export default function HeroSection() {
   return (
     <section className="flex flex-col gap-6 md:gap-8 relative pt-2">
-      {/* Brand Header: New Logo + Tactical Chat Doodle */}
+      {/* Brand Header: Crisp Vector Kiosq Logo */}
       <div className="flex justify-between items-center">
-        <Link to="/" className="inline-flex items-center">
-          <img
-            src="/kiosq-logo.png"
-            alt="Kiosq - Chat Commerce"
-            className="h-10 sm:h-12 md:h-14 w-auto object-contain"
-          />
+        <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+          <KiosqLogo className="h-10 sm:h-12 md:h-13 w-auto" />
         </Link>
 
         <div className="flex items-center gap-2">

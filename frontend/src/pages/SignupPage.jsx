@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
+import KiosqLogo from "../components/KiosqLogo";
 
 export default function SignupPage() {
   const navigate = useNavigate();
+
+  // If already logged in, redirect directly to dashboard
+  useEffect(() => {
+    const token = localStorage.getItem("kiosq_token");
+    if (token) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate]);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -60,12 +69,8 @@ export default function SignupPage() {
       <main className="w-full max-w-lg relative z-10 flex flex-col gap-6">
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center gap-2">
-          <Link to="/" className="inline-block">
-            <img
-              src="/kiosq-logo.png"
-              alt="Kiosq - Chat Commerce"
-              className="h-12 w-auto object-contain"
-            />
+          <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
+            <KiosqLogo className="h-12 w-auto" />
           </Link>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-bold uppercase mt-1">
             <span className="material-symbols-outlined text-[16px]">bolt</span>

@@ -1,12 +1,24 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import KiosqLogo from "../components/KiosqLogo";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // If already logged in, redirect directly to dashboard or target route
+  useEffect(() => {
+    const token = localStorage.getItem("kiosq_token");
+    if (token) {
+      navigate(redirectTo, { replace: true });
+    }
+  }, [navigate, redirectTo]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,7 +42,7 @@ export default function LoginPage() {
       localStorage.setItem("kiosq_token", data.token);
       localStorage.setItem("kiosq_merchant", JSON.stringify(data));
 
-      navigate("/dashboard");
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err.message || "Unable to sign in. Please check your credentials.");
     } finally {
@@ -46,12 +58,8 @@ export default function LoginPage() {
       <main className="w-full max-w-md relative z-10 flex flex-col gap-6">
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center gap-2">
-          <Link to="/" className="inline-block">
-            <img
-              src="/kiosq-logo.png"
-              alt="Kiosq - Chat Commerce"
-              className="h-12 w-auto object-contain"
-            />
+          <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
+            <KiosqLogo className="h-12 w-auto" />
           </Link>
           <h1 className="text-headline-lg font-extrabold text-on-surface tracking-tight mt-2">
             Welcome back, Merchant

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router";
 import { ToastProvider } from "./context/ToastContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -19,19 +20,64 @@ export default function App() {
     <ToastProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/product/:id" element={<BuyerProductPage />} />
           <Route path="/haggle/:id" element={<AiNegotiationChat />} />
           <Route path="/escrow/:orderId" element={<EscrowPaymentTracking />} />
-          <Route path="/dashboard" element={<SellerDashboard />} />
-          <Route path="/add-product" element={<AddProduct />} />
-          <Route path="/transactions" element={<TransactionsPage />} />
-          <Route path="/profile" element={<SellerProfile />} />
-          <Route path="/orders" element={<OrdersList />} />
-          <Route path="/orders/:orderId" element={<OrderDetail />} />
           <Route path="/handoff/:orderId" element={<PublicHandoffPage />} />
+
+          {/* Protected Merchant Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <SellerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-product"
+            element={
+              <ProtectedRoute>
+                <AddProduct />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transactions"
+            element={
+              <ProtectedRoute>
+                <TransactionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <SellerProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <OrdersList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:orderId"
+            element={
+              <ProtectedRoute>
+                <OrderDetail />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </ToastProvider>
