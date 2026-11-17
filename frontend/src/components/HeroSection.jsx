@@ -7,7 +7,7 @@ export default function HeroSection() {
       {/* Brand Header: Crisp Vector Kiosq Logo */}
       <div className="flex justify-between items-center">
         <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
-          <KiosqLogo className="h-10 sm:h-12 md:h-13 w-auto" />
+          <KiosqLogo className="h-14 sm:h-16 md:h-18 w-auto" />
         </Link>
 
         <div className="flex items-center gap-2">

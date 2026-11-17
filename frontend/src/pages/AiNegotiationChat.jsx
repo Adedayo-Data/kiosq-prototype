@@ -102,7 +102,7 @@ export default function AiNegotiationChat() {
               <span className="material-symbols-outlined text-[20px]">arrow_back</span>
             </Link>
             <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
-              <KiosqLogo className="h-7 w-auto" />
+              <KiosqLogo className="h-9 sm:h-10 w-auto" />
             </Link>
           </div>
 

@@ -164,7 +164,7 @@ export default function AddProduct() {
                 <span>Dashboard</span>
               </Link>
               <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
-                <KiosqLogo className="h-8 w-auto" />
+                <KiosqLogo className="h-10 sm:h-12 w-auto" />
               </Link>
             </div>
 

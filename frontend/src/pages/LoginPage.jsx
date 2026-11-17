@@ -60,7 +60,7 @@ export default function LoginPage() {
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center gap-2">
           <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
-            <KiosqLogo className="h-12 w-auto" />
+            <KiosqLogo className="h-16 sm:h-20 w-auto" />
           </Link>
           <h1 className="text-headline-lg font-extrabold text-on-surface tracking-tight mt-2">
             Welcome back, Merchant

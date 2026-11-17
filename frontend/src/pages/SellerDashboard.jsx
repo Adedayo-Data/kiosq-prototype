@@ -175,7 +175,7 @@ export default function SellerDashboard() {
           {/* Top Brand Bar */}
           <div className="flex items-center justify-between pb-3 border-b border-surface-container-high">
             <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
-              <KiosqLogo className="h-9 sm:h-10 w-auto" />
+              <KiosqLogo className="h-11 sm:h-13 w-auto" />
             </Link>
 
             <div className="flex items-center gap-2 sm:gap-3">

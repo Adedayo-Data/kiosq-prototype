@@ -1,4 +1,4 @@
-export default function KiosqLogo({ className = "h-12 w-auto", alt = "Kiosq — Chat Commerce" }) {
+export default function KiosqLogo({ className = "h-14 w-auto", alt = "Kiosq — Chat Commerce" }) {
   return (
     <img
       src="/kiosq-logo.png"

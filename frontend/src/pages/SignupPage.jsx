@@ -71,7 +71,7 @@ export default function SignupPage() {
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center gap-2">
           <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
-            <KiosqLogo className="h-12 w-auto" />
+            <KiosqLogo className="h-16 sm:h-20 w-auto" />
           </Link>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-bold uppercase mt-1">
             <span className="material-symbols-outlined text-[16px]">bolt</span>
