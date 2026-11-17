@@ -36,23 +36,23 @@ public class KiosqService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Resolves merchant from authenticated JWT context or falls back to default seed merchant
+    // Resolves merchant from authenticated JWT context (email) or falls back to default seed merchant
     @Transactional
     public Merchant getCurrentMerchant() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && auth.getName() != null && !auth.getName().equals("anonymousUser")) {
-            return merchantRepository.findByPhone(auth.getName()).orElseGet(this::getOrCreateDefaultMerchant);
+            return merchantRepository.findByEmail(auth.getName()).orElseGet(this::getOrCreateDefaultMerchant);
         }
         return getOrCreateDefaultMerchant();
     }
 
     @Transactional
     public Merchant getOrCreateDefaultMerchant() {
-        return merchantRepository.findByPhone("08012345678").orElseGet(() -> {
+        return merchantRepository.findByEmail("tola@kiosq.africa").orElseGet(() -> {
             Merchant m = new Merchant(
                 "Chioma Adeleke",
-                "08012345678",
                 "tola@kiosq.africa",
+                "08012345678",
                 passwordEncoder.encode("password123"),
                 "Mama Tola Textiles",
                 "Balogun Market, Lagos Island"
@@ -96,7 +96,6 @@ public class KiosqService {
         map.put("title", p.getTitle());
         map.put("description", p.getDescription());
         map.put("askingPrice", p.getAskingPrice());
-        // Floor price is intentionally OMITTED for buyer security
         map.put("imageUrl", p.getImageUrl());
         map.put("whatsappCaption", p.getWhatsappCaption());
         map.put("merchantName", p.getMerchant().getBusinessName());
@@ -233,6 +232,7 @@ public class KiosqService {
 
         Map<String, Object> metrics = new LinkedHashMap<>();
         metrics.put("merchantName", m.getBusinessName());
+        metrics.put("email", m.getEmail());
         metrics.put("phone", m.getPhone());
         metrics.put("availablePayout", availablePayout);
         metrics.put("lockedInEscrow", lockedInEscrow);

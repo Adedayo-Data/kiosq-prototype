@@ -29,34 +29,46 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest req) {
-        if (merchantRepository.existsByPhone(req.phone())) {
-            throw new IllegalArgumentException("A merchant with phone " + req.phone() + " already exists!");
+        if (req.email() == null || req.email().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email is required for registration!");
+        }
+
+        String normalizedEmail = req.email().trim().toLowerCase();
+
+        if (merchantRepository.existsByEmail(normalizedEmail)) {
+            throw new IllegalArgumentException("A merchant with email " + normalizedEmail + " already exists!");
         }
 
         Merchant merchant = new Merchant(
                 req.fullName(),
+                normalizedEmail,
                 req.phone(),
-                req.email(),
                 passwordEncoder.encode(req.password()),
                 req.businessName(),
                 req.marketLocation() != null ? req.marketLocation() : "Lagos, Nigeria"
         );
         Merchant saved = merchantRepository.save(merchant);
 
-        String token = jwtService.generateToken(saved.getPhone(), saved.getId(), saved.getBusinessName());
-        return new AuthResponse(token, saved.getId(), saved.getBusinessName(), saved.getPhone(), "Merchant registered successfully!");
+        String token = jwtService.generateToken(saved.getEmail(), saved.getId(), saved.getBusinessName());
+        return new AuthResponse(token, saved.getId(), saved.getBusinessName(), saved.getEmail(), saved.getPhone(), "Merchant registered successfully!");
     }
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest req) {
-        Merchant merchant = merchantRepository.findByPhone(req.phone())
-                .orElseThrow(() -> new IllegalArgumentException("Merchant not found with phone: " + req.phone()));
-
-        if (!passwordEncoder.matches(req.password(), merchant.getPassword())) {
-            throw new IllegalArgumentException("Invalid phone or password!");
+        if (req.email() == null || req.email().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email is required!");
         }
 
-        String token = jwtService.generateToken(merchant.getPhone(), merchant.getId(), merchant.getBusinessName());
-        return new AuthResponse(token, merchant.getId(), merchant.getBusinessName(), merchant.getPhone(), "Login successful!");
+        String normalizedEmail = req.email().trim().toLowerCase();
+
+        Merchant merchant = merchantRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Merchant not found with email: " + normalizedEmail));
+
+        if (!passwordEncoder.matches(req.password(), merchant.getPassword())) {
+            throw new IllegalArgumentException("Invalid email or password!");
+        }
+
+        String token = jwtService.generateToken(merchant.getEmail(), merchant.getId(), merchant.getBusinessName());
+        return new AuthResponse(token, merchant.getId(), merchant.getBusinessName(), merchant.getEmail(), merchant.getPhone(), "Login successful!");
     }
 }

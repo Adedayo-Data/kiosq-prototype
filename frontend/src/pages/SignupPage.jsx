@@ -6,8 +6,8 @@ export default function SignupPage() {
 
   const [formData, setFormData] = useState({
     fullName: "",
-    phone: "",
     email: "",
+    phone: "",
     password: "",
     businessName: "",
     marketLocation: "Balogun Market, Lagos Island",
@@ -29,7 +29,10 @@ export default function SignupPage() {
       const response = await fetch("http://localhost:8080/api/v1/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          email: formData.email.trim().toLowerCase(),
+        }),
       });
 
       const data = await response.json();
@@ -86,7 +89,7 @@ export default function SignupPage() {
           )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {/* Full Name & Phone Row */}
+            {/* Full Name & Business Name Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-label-sm font-bold text-on-surface uppercase tracking-wider">
@@ -98,6 +101,39 @@ export default function SignupPage() {
                   required
                   placeholder="e.g. Chioma Adeleke"
                   value={formData.fullName}
+                  onChange={handleChange}
+                  className="w-full h-12 px-3.5 rounded-DEFAULT bg-surface-container-low border-2 border-primary text-body-md font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-label-sm font-bold text-on-surface uppercase tracking-wider">
+                  Store / Brand Name
+                </label>
+                <input
+                  type="text"
+                  name="businessName"
+                  required
+                  placeholder="e.g. Mama Tola Textiles"
+                  value={formData.businessName}
+                  onChange={handleChange}
+                  className="w-full h-12 px-3.5 rounded-DEFAULT bg-surface-container-low border-2 border-primary text-body-md font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50"
+                />
+              </div>
+            </div>
+
+            {/* Email (Required for login) & Phone */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-label-sm font-bold text-on-surface uppercase tracking-wider">
+                  Email Address <span className="text-error">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  placeholder="vendor@kiosq.africa"
+                  value={formData.email}
                   onChange={handleChange}
                   className="w-full h-12 px-3.5 rounded-DEFAULT bg-surface-container-low border-2 border-primary text-body-md font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50"
                 />
@@ -119,38 +155,8 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Business Name */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-label-sm font-bold text-on-surface uppercase tracking-wider">
-                Store / Brand Name
-              </label>
-              <input
-                type="text"
-                name="businessName"
-                required
-                placeholder="e.g. Mama Tola Textiles or Kicks by Emeka"
-                value={formData.businessName}
-                onChange={handleChange}
-                className="w-full h-12 px-3.5 rounded-DEFAULT bg-surface-container-low border-2 border-primary text-body-md font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50"
-              />
-            </div>
-
-            {/* Email & Location */}
+            {/* Location & Password */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-label-sm font-bold text-on-surface uppercase tracking-wider">
-                  Email (Optional)
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="vendor@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full h-12 px-3.5 rounded-DEFAULT bg-surface-container-low border-2 border-primary text-body-md font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50"
-                />
-              </div>
-
               <div className="flex flex-col gap-1.5">
                 <label className="text-label-sm font-bold text-on-surface uppercase tracking-wider">
                   City / Market Location
@@ -165,22 +171,21 @@ export default function SignupPage() {
                   className="w-full h-12 px-3.5 rounded-DEFAULT bg-surface-container-low border-2 border-primary text-body-md font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50"
                 />
               </div>
-            </div>
 
-            {/* Password */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-label-sm font-bold text-on-surface uppercase tracking-wider">
-                Password
-              </label>
-              <input
-                type="password"
-                name="password"
-                required
-                placeholder="At least 6 characters"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full h-12 px-3.5 rounded-DEFAULT bg-surface-container-low border-2 border-primary text-body-md font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50"
-              />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-label-sm font-bold text-on-surface uppercase tracking-wider">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  placeholder="At least 6 characters"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full h-12 px-3.5 rounded-DEFAULT bg-surface-container-low border-2 border-primary text-body-md font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50"
+                />
+              </div>
             </div>
 
             {/* Submit Button */}

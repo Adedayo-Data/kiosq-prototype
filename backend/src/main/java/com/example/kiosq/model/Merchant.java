@@ -15,9 +15,10 @@ public class Merchant {
     private String fullName;
 
     @Column(nullable = false, unique = true)
-    private String phone;
+    private String email; // Primary login identifier
 
-    private String email;
+    @Column(nullable = false)
+    private String phone;
 
     @Column(nullable = false)
     private String password; // BCrypt hashed password
@@ -37,10 +38,10 @@ public class Merchant {
 
     public Merchant() {}
 
-    public Merchant(String fullName, String phone, String email, String password, String businessName, String marketLocation) {
+    public Merchant(String fullName, String email, String phone, String password, String businessName, String marketLocation) {
         this.fullName = fullName;
-        this.phone = phone;
         this.email = email;
+        this.phone = phone;
         this.password = password;
         this.businessName = businessName;
         this.marketLocation = marketLocation;
@@ -52,11 +53,11 @@ public class Merchant {
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }

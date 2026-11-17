@@ -31,6 +31,8 @@ public class Product {
     private String whatsappCaption;
 
     private String category;
+
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)

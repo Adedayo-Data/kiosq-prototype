@@ -1,6 +1,6 @@
 package com.example.kiosq.dto;
 
 public record LoginRequest(
-    String phone,
+    String email,
     String password
 ) {}
