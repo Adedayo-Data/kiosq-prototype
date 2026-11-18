@@ -131,7 +131,7 @@ export default function HeroSection() {
             {/* Chat Bubble Simulation */}
             <div className="bg-surface-container p-3.5 rounded-DEFAULT flex flex-col gap-2.5 border border-surface-container-high">
               <p className="text-body-md text-on-surface leading-relaxed">
-                “Buyer offered ₦22,000 for Vintage Adire Shirt. Floor is ₦25,000. Counter-offered{" "}
+                “Buyer offered ₦22,000 for Vintage Adire Shirt. Ara counter-offered{" "}
                 <span className="font-bold">₦26,500</span> with doorstep delivery!”
               </p>
               <div className="flex flex-wrap items-center justify-between gap-1 pt-1 border-t border-surface-container-high/60">

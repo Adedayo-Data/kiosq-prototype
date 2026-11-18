@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useParams } from "react-router";
 import { useToast } from "../context/ToastContext";
 import { getOrderById, updateOrder } from "../utils/orderStorage";
+import { API_BASE_URL } from "../utils/constants";
 import KiosqLogo from "../components/KiosqLogo";
 
 export default function OrderDetail() {
@@ -25,8 +26,25 @@ export default function OrderDetail() {
   const contestFileRef = useRef(null);
 
   useEffect(() => {
-    const found = getOrderById(orderId);
-    setOrder(found);
+    let isMounted = true;
+    async function loadOrder() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/v1/escrow/orders/${orderId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setOrder(data);
+            return;
+          }
+        }
+      } catch {
+        // fallback
+      }
+      const found = getOrderById(orderId);
+      if (isMounted) setOrder(found);
+    }
+    loadOrder();
+    return () => { isMounted = false; };
   }, [orderId]);
 
   if (!order) {
@@ -41,7 +59,7 @@ export default function OrderDetail() {
   }
 
   // Handle Mark as Dispatched
-  const handleMarkDispatched = () => {
+  const handleMarkDispatched = async () => {
     let delivererName = "Seller (Direct)";
     if (dispatchForm.deliveredBy === "trusted") {
       delivererName = dispatchForm.name ? `${dispatchForm.name} (Friend/Family)` : "Trusted contact";
@@ -49,7 +67,25 @@ export default function OrderDetail() {
       delivererName = dispatchForm.name ? `${dispatchForm.name} (Courier)` : "Courier service";
     }
 
-    const updatedTimeline = order.timeline.map((step) => {
+    try {
+      const token = localStorage.getItem("kiosq_token");
+      await fetch(`${API_BASE_URL}/api/v1/escrow/orders/${order.orderReference || orderId}/dispatch`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          courierName: delivererName,
+          courierPhone: dispatchForm.phone,
+          packedItemPhoto: dispatchForm.packedPhoto,
+        }),
+      });
+    } catch {
+      // fallback
+    }
+
+    const updatedTimeline = order.timeline ? order.timeline.map((step) => {
       if (step.label === "Dispatched") {
         return {
           ...step,
@@ -59,7 +95,7 @@ export default function OrderDetail() {
         };
       }
       return step;
-    });
+    }) : [];
 
     const updated = updateOrder(order.id, {
       deliveryStatus: "DISPATCHED",
@@ -79,22 +115,41 @@ export default function OrderDetail() {
   };
 
   // Handle Doorstep PIN Confirmation
-  const handleVerifyPin = () => {
+  const handleVerifyPin = async () => {
     if (!pinInput.trim() || pinInput.length !== 4) {
       setPinError("Please enter the complete 4-digit PIN provided by the buyer.");
       addToast("Invalid PIN format. Must be 4 digits.", "error", 8000);
       return;
     }
 
-    if (pinInput.trim() !== order.deliveryPin) {
-      setPinError("Incorrect 4-digit PIN! Please ask the buyer to check their Kiosq screen.");
-      addToast("PIN does not match buyer's delivery code. Verification failed.", "error", 10000);
-      return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/riders/verify-pin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderReference: order.orderReference || order.id || orderId,
+          pin: pinInput.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const errMsg = data.message || "Incorrect PIN! Verification failed.";
+        setPinError(errMsg);
+        addToast(errMsg, "error", 10000);
+        return;
+      }
+    } catch {
+      if (order.deliveryPin && pinInput.trim() !== order.deliveryPin) {
+        setPinError("Incorrect 4-digit PIN! Please ask the buyer to check their Kiosq screen.");
+        addToast("PIN does not match buyer's delivery code. Verification failed.", "error", 10000);
+        return;
+      }
     }
 
     // Success: advance timeline to PIN verified & start 24h inspection window
     setPinError("");
-    const updatedTimeline = order.timeline.map((step) => {
+    const updatedTimeline = order.timeline ? order.timeline.map((step) => {
       if (step.label === "Delivered (PIN)") {
         return { ...step, completed: true, time: "Just now", note: "Physical handoff verified with 4-digit PIN" };
       }
@@ -102,7 +157,7 @@ export default function OrderDetail() {
         return { ...step, completed: true, time: "Active now", note: "24-hour buyer inspection countdown started" };
       }
       return step;
-    });
+    }) : [];
 
     const updated = updateOrder(order.id, {
       deliveryStatus: "PIN_VERIFIED",

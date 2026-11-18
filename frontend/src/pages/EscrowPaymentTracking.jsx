@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { useToast } from "../context/ToastContext";
 import { getOrderById, updateOrder } from "../utils/orderStorage";
+import { API_BASE_URL } from "../utils/constants";
 import KiosqLogo from "../components/KiosqLogo";
 
 export default function EscrowPaymentTracking() {
@@ -22,11 +23,35 @@ export default function EscrowPaymentTracking() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const found = getOrderById(orderId || "ORD-4821");
-    setOrder(found);
-    if (found?.deliveryStatus === "DELIVERED_AND_RELEASED") {
-      setDeliveryConfirmed(true);
+    let isMounted = true;
+    async function loadOrder() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/v1/escrow/orders/${orderId || "ORD-4821"}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setOrder(data);
+            if (data.deliveryStatus === "DELIVERED_AND_RELEASED") {
+              setDeliveryConfirmed(true);
+            }
+          }
+          return;
+        }
+      } catch {
+        // fallback
+      }
+
+      const found = getOrderById(orderId || "ORD-4821");
+      if (isMounted) {
+        setOrder(found);
+        if (found?.deliveryStatus === "DELIVERED_AND_RELEASED") {
+          setDeliveryConfirmed(true);
+        }
+      }
     }
+
+    loadOrder();
+    return () => { isMounted = false; };
   }, [orderId]);
 
   const deliveryPin = order?.deliveryPin || "7429";
@@ -39,15 +64,30 @@ export default function EscrowPaymentTracking() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const handleConfirmDelivery = () => {
+  const handleConfirmDelivery = async () => {
     setDeliveryConfirmed(true);
+    try {
+      if (order?.deliveryPin) {
+        await fetch(`${API_BASE_URL}/api/v1/riders/verify-pin`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderReference: order.orderReference || orderId || "ORD-4821",
+            pin: order.deliveryPin,
+          }),
+        });
+      }
+    } catch {
+      // ignore
+    }
+
     if (order) {
-      const updatedTimeline = order.timeline.map((step) => {
+      const updatedTimeline = order.timeline ? order.timeline.map((step) => {
         if (step.label === "Delivered (PIN)" || step.label === "Released") {
           return { ...step, completed: true, time: "Just now", note: "Confirmed by buyer" };
         }
         return step;
-      });
+      }) : [];
       updateOrder(order.id, {
         status: "Completed",
         deliveryStatus: "DELIVERED_AND_RELEASED",
@@ -58,10 +98,23 @@ export default function EscrowPaymentTracking() {
   };
 
   // Submit Dispute (Requirement 5 Step 3)
-  const handleSubmitDispute = () => {
+  const handleSubmitDispute = async () => {
     if (!selectedReason) {
       addToast("Please select a reason for reporting an issue.", "error", 8000);
       return;
+    }
+
+    try {
+      await fetch(`${API_BASE_URL}/api/v1/escrow/orders/${orderId || "ORD-4821"}/dispute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reason: selectedReason,
+          note: disputeNote,
+        }),
+      });
+    } catch {
+      // fallback
     }
 
     const disputeData = {

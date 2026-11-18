@@ -7,5 +7,6 @@ public record CreateEscrowOrderRequest(
     BigDecimal agreedAmount,
     String buyerName,
     String buyerPhone,
-    String deliveryAddress
+    String deliveryAddress,
+    String paymentTxRef
 ) {}

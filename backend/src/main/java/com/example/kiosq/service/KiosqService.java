@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -21,6 +22,7 @@ public class KiosqService {
     private final EscrowOrderRepository escrowOrderRepository;
     private final CreditRecordRepository creditRecordRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     public KiosqService(
         MerchantRepository merchantRepository,
@@ -162,7 +164,7 @@ public class KiosqService {
         map.put("title", p.getTitle());
         map.put("description", p.getDescription());
         map.put("askingPrice", p.getAskingPrice());
-        map.put("floorPrice", p.getFloorPrice());
+        // Floor price is strictly withheld from public payloads to protect seller margins
         map.put("imageUrl", p.getImageUrl());
         map.put("whatsappCaption", p.getWhatsappCaption());
         map.put("merchantId", p.getMerchant().getId());
@@ -240,14 +242,21 @@ public class KiosqService {
         );
     }
 
-    // 4. Create Escrow Order & Issue 4-Digit Delivery PIN
+    // 4. Create Escrow Order & Issue 4-Digit Delivery PIN (Cryptographically secure)
     @Transactional
-    public EscrowOrder createEscrowOrder(CreateEscrowOrderRequest req) {
+    public Map<String, Object> createEscrowOrder(CreateEscrowOrderRequest req) {
         Product p = productRepository.findBySlug(req.productSlug())
-            .orElseThrow(() -> new RuntimeException("Product not found"));
+            .or(() -> {
+                try {
+                    return productRepository.findById(Long.parseLong(req.productSlug()));
+                } catch (NumberFormatException e) {
+                    return Optional.empty();
+                }
+            })
+            .orElseThrow(() -> new RuntimeException("Product not found: " + req.productSlug()));
 
         EscrowOrder order = new EscrowOrder();
-        String ref = "ORD-" + (1000 + new Random().nextInt(9000));
+        String ref = "ORD-" + (1000 + secureRandom.nextInt(9000));
         order.setOrderReference(ref);
         order.setProduct(p);
         order.setMerchant(p.getMerchant());
@@ -255,25 +264,109 @@ public class KiosqService {
         order.setBuyerName(req.buyerName());
         order.setBuyerPhone(req.buyerPhone());
         order.setDeliveryAddress(req.deliveryAddress());
+        order.setFlutterwaveTxRef(req.paymentTxRef());
 
-        String pin = String.format("%04d", new Random().nextInt(10000));
+        // Generate 4-digit PIN using SecureRandom
+        String pin = String.format("%04d", secureRandom.nextInt(10000));
         order.setDeliveryPin(pin);
         order.setStatus(EscrowOrder.EscrowStatus.FUNDS_HELD_IN_ESCROW);
         order.setPaidAt(LocalDateTime.now());
 
-        return escrowOrderRepository.save(order);
+        EscrowOrder saved = escrowOrderRepository.save(order);
+        return mapEscrowOrderToDto(saved);
     }
 
-    // 5. Doorstep Rider / Buyer 4-Digit PIN Verification
+    // 4b. Get Single Escrow Order by Reference (Public tracking & Buyer details)
+    @Transactional(readOnly = true)
+    public Map<String, Object> getEscrowOrder(String orderReference) {
+        EscrowOrder order = escrowOrderRepository.findByOrderReference(orderReference)
+            .orElseThrow(() -> new RuntimeException("Order not found with reference: " + orderReference));
+        return mapEscrowOrderToDto(order);
+    }
+
+    // 4c. Get Authenticated Merchant's Orders
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getMerchantOrders() {
+        Merchant m = getCurrentMerchant();
+        List<EscrowOrder> orders = escrowOrderRepository.findByMerchantIdOrderByCreatedAtDesc(m.getId());
+        return orders.stream().map(this::mapEscrowOrderToDto).toList();
+    }
+
+    // 4d. Mark Order Dispatched (Merchant action)
+    @Transactional
+    public Map<String, Object> dispatchOrder(String orderReference, DispatchOrderRequest req) {
+        EscrowOrder order = escrowOrderRepository.findByOrderReference(orderReference)
+            .orElseThrow(() -> new RuntimeException("Order not found: " + orderReference));
+
+        order.setStatus(EscrowOrder.EscrowStatus.DISPATCHED);
+        order.setDispatchedAt(LocalDateTime.now());
+        if (req.courierName() != null) order.setCourierName(req.courierName());
+        if (req.courierPhone() != null) order.setCourierPhone(req.courierPhone());
+        if (req.packedItemPhoto() != null) order.setPackedItemPhoto(req.packedItemPhoto());
+
+        EscrowOrder saved = escrowOrderRepository.save(order);
+        return mapEscrowOrderToDto(saved);
+    }
+
+    // 4e. Buyer Dispute Freeze (Atomically freezes payout)
+    @Transactional
+    public Map<String, Object> disputeOrder(String orderReference, DisputeOrderRequest req) {
+        EscrowOrder order = escrowOrderRepository.findByOrderReference(orderReference)
+            .orElseThrow(() -> new RuntimeException("Order not found: " + orderReference));
+
+        if (order.getStatus() == EscrowOrder.EscrowStatus.DELIVERED_AND_RELEASED) {
+            throw new IllegalStateException("Cannot dispute an order that has already been delivered and released.");
+        }
+
+        order.setStatus(EscrowOrder.EscrowStatus.DISPUTED);
+        order.setDisputeReason(req.reason());
+        order.setDisputeNote(req.note());
+
+        EscrowOrder saved = escrowOrderRepository.save(order);
+        return mapEscrowOrderToDto(saved);
+    }
+
+    // 5. Doorstep Rider / Courier 4-Digit PIN Verification (Hardened Rate Limiting & Anti-Brute-Force)
     @Transactional
     public Map<String, Object> verifyDeliveryPin(VerifyPinRequest req) {
         EscrowOrder order = escrowOrderRepository.findByOrderReference(req.orderReference())
             .orElseThrow(() -> new RuntimeException("Order not found: " + req.orderReference()));
 
-        if (!order.getDeliveryPin().equals(req.pin().trim())) {
-            throw new IllegalArgumentException("Invalid 4-digit Delivery PIN! Check with the buyer.");
+        // Idempotency check
+        if (order.getStatus() == EscrowOrder.EscrowStatus.DELIVERED_AND_RELEASED) {
+            throw new IllegalStateException("Order payout has already been verified and released to merchant.");
         }
 
+        // Dispute check
+        if (order.getStatus() == EscrowOrder.EscrowStatus.DISPUTED) {
+            throw new IllegalStateException("This order is currently under active dispute. Payout is frozen.");
+        }
+
+        // Account Lockout check (Max 3 failed attempts)
+        if (order.getStatus() == EscrowOrder.EscrowStatus.PIN_LOCKED || order.getFailedPinAttempts() >= 3) {
+            order.setStatus(EscrowOrder.EscrowStatus.PIN_LOCKED);
+            escrowOrderRepository.save(order);
+            throw new IllegalStateException("Too many failed attempts! PIN verification is locked to protect customer funds. Contact Kiosq support.");
+        }
+
+        // Validate PIN
+        if (!order.getDeliveryPin().equals(req.pin().trim())) {
+            int attempts = order.getFailedPinAttempts() + 1;
+            order.setFailedPinAttempts(attempts);
+            if (attempts >= 3) {
+                order.setStatus(EscrowOrder.EscrowStatus.PIN_LOCKED);
+            }
+            escrowOrderRepository.save(order);
+
+            int remaining = Math.max(0, 3 - attempts);
+            if (remaining == 0) {
+                throw new IllegalArgumentException("Incorrect PIN. 3 failed attempts reached — PIN verification has been locked!");
+            }
+            throw new IllegalArgumentException("Invalid 4-digit Delivery PIN! " + remaining + " attempt(s) remaining.");
+        }
+
+        // Success: Reset failed attempts, update status and release funds
+        order.setFailedPinAttempts(0);
         order.setStatus(EscrowOrder.EscrowStatus.DELIVERED_AND_RELEASED);
         order.setPinVerifiedAt(LocalDateTime.now());
         order.setReleasedAt(LocalDateTime.now());
@@ -298,6 +391,85 @@ public class KiosqService {
         response.put("creditAuditHash", auditHash);
         response.put("message", "PIN Verified! ₦" + order.getAmount() + " successfully released to merchant settlement ledger.");
         return response;
+    }
+
+    // Helper: Map EscrowOrder Entity to rich, formatted DTO
+    public Map<String, Object> mapEscrowOrderToDto(EscrowOrder o) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", o.getOrderReference());
+        map.put("orderReference", o.getOrderReference());
+        map.put("itemTitle", o.getProduct().getTitle());
+        map.put("productSlug", o.getProduct().getSlug());
+        map.put("imageUrl", o.getProduct().getImageUrl());
+        map.put("amount", o.getAmount());
+        map.put("buyerFullName", o.getBuyerName() != null ? o.getBuyerName() : "Valued Customer");
+        map.put("buyerPhone", o.getBuyerPhone() != null ? o.getBuyerPhone() : "");
+        map.put("deliveryAddress", o.getDeliveryAddress() != null ? o.getDeliveryAddress() : "");
+        map.put("status", o.getStatus() == EscrowOrder.EscrowStatus.DELIVERED_AND_RELEASED ? "Completed" : "In escrow");
+        map.put("deliveryStatus", o.getStatus().name());
+        map.put("deliveryPin", o.getDeliveryPin());
+        map.put("failedPinAttempts", o.getFailedPinAttempts());
+        map.put("courierName", o.getCourierName());
+        map.put("courierPhone", o.getCourierPhone());
+        map.put("packedItemPhoto", o.getPackedItemPhoto());
+        map.put("disputeReason", o.getDisputeReason());
+        map.put("disputeNote", o.getDisputeNote());
+        map.put("flutterwaveTxRef", o.getFlutterwaveTxRef());
+        map.put("createdAt", o.getCreatedAt());
+        map.put("paidAt", o.getPaidAt());
+        map.put("dispatchedAt", o.getDispatchedAt());
+        map.put("pinVerifiedAt", o.getPinVerifiedAt());
+        map.put("releasedAt", o.getReleasedAt());
+        map.put("merchantBusinessName", o.getMerchant() != null ? o.getMerchant().getBusinessName() : "Kiosq Merchant");
+        map.put("merchantPhone", o.getMerchant() != null ? o.getMerchant().getPhone() : "");
+
+        // Construct structured timeline matching frontend expectations
+        List<Map<String, Object>> timeline = new ArrayList<>();
+        boolean isPaid = o.getStatus() != EscrowOrder.EscrowStatus.PENDING_PAYMENT;
+        boolean isDispatched = o.getStatus() == EscrowOrder.EscrowStatus.DISPATCHED
+                || o.getStatus() == EscrowOrder.EscrowStatus.PIN_VERIFIED
+                || o.getStatus() == EscrowOrder.EscrowStatus.DELIVERED_AND_RELEASED;
+        boolean isDelivered = o.getStatus() == EscrowOrder.EscrowStatus.PIN_VERIFIED
+                || o.getStatus() == EscrowOrder.EscrowStatus.DELIVERED_AND_RELEASED;
+        boolean isReleased = o.getStatus() == EscrowOrder.EscrowStatus.DELIVERED_AND_RELEASED;
+
+        Map<String, Object> t1 = new LinkedHashMap<>();
+        t1.put("label", "Paid");
+        t1.put("completed", isPaid);
+        t1.put("time", o.getPaidAt() != null ? o.getPaidAt().toString() : null);
+        t1.put("note", "₦" + o.getAmount() + " deposited into safe escrow");
+        timeline.add(t1);
+
+        Map<String, Object> t2 = new LinkedHashMap<>();
+        t2.put("label", "Dispatched");
+        t2.put("completed", isDispatched);
+        t2.put("time", o.getDispatchedAt() != null ? o.getDispatchedAt().toString() : null);
+        t2.put("note", o.getCourierName() != null ? "With " + o.getCourierName() : "Awaiting dispatch confirmation");
+        timeline.add(t2);
+
+        Map<String, Object> t3 = new LinkedHashMap<>();
+        t3.put("label", "Delivered (PIN)");
+        t3.put("completed", isDelivered);
+        t3.put("time", o.getPinVerifiedAt() != null ? o.getPinVerifiedAt().toString() : null);
+        t3.put("note", isDelivered ? "Verified by delivery person at doorstep" : "4-digit handoff PIN pending");
+        timeline.add(t3);
+
+        Map<String, Object> t4 = new LinkedHashMap<>();
+        t4.put("label", "Inspection window");
+        t4.put("completed", isDelivered);
+        t4.put("time", isDelivered ? "Active" : null);
+        t4.put("note", "24-hour buyer inspection window");
+        timeline.add(t4);
+
+        Map<String, Object> t5 = new LinkedHashMap<>();
+        t5.put("label", "Released");
+        t5.put("completed", isReleased);
+        t5.put("time", o.getReleasedAt() != null ? o.getReleasedAt().toString() : null);
+        t5.put("note", isReleased ? "Payout disbursed to seller settlement account" : "Pending delivery verification");
+        timeline.add(t5);
+
+        map.put("timeline", timeline);
+        return map;
     }
 
     // 6. Seller Dashboard Metrics (Authenticated Merchant)

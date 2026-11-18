@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useToast } from "../context/ToastContext";
 import { FALLBACK_ANKARA_IMAGE, API_BASE_URL } from "../utils/constants";
+import { initiateFlutterwavePayment } from "../utils/flutterwave";
+import { updateOrder } from "../utils/orderStorage";
 import KiosqLogo from "../components/KiosqLogo";
 
 export default function BuyerProductPage() {
@@ -98,6 +100,47 @@ export default function BuyerProductPage() {
     } else {
       addToast(`Share link: ${productUrl}`, "info", 10000);
     }
+  };
+
+  const handleBuyNow = () => {
+    const rawPrice = product?.askingPrice || 28000;
+    initiateFlutterwavePayment({
+      amount: rawPrice,
+      itemTitle: product?.title || displayTitle,
+      buyerName: "Verified Buyer",
+      buyerEmail: "buyer@usekiosq.shop",
+      buyerPhone: "08012345678",
+      onSuccess: async (paymentRes) => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/v1/escrow/orders`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              productSlug: product?.slug || id || "ankara-wax",
+              agreedAmount: rawPrice,
+              buyerName: "Verified Buyer",
+              buyerPhone: "08012345678",
+              deliveryAddress: "Customer Doorstep Address, Lagos",
+              paymentTxRef: paymentRes.tx_ref,
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            updateOrder(data.orderReference, data);
+            addToast("🎉 Payment secured in Escrow! Delivery PIN issued.", "success", 8000);
+            navigate(`/escrow/${data.orderReference}`);
+          } else {
+            navigate(`/escrow/ORD-4821?price=${rawPrice}`);
+          }
+        } catch (e) {
+          console.error("Order creation error:", e);
+          navigate(`/escrow/ORD-4821?price=${rawPrice}`);
+        }
+      },
+      onClose: () => {
+        addToast("Payment window closed.", "info", 4000);
+      },
+    });
   };
 
   const handleSaveEdit = async () => {
@@ -262,7 +305,7 @@ export default function BuyerProductPage() {
                     {displayPrice}
                   </span>
                   <span className="text-label-sm bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full font-bold">
-                    Floor protected
+                    100% Safe Escrow
                   </span>
                 </div>
               </div>
@@ -384,13 +427,14 @@ export default function BuyerProductPage() {
                       <span className="truncate">Make an Offer / Haggle</span>
                     </button>
 
-                    <Link
-                      to={`/escrow/order-${product?.id || "4821"}`}
+                    <button
+                      onClick={handleBuyNow}
                       className="flex-1 h-13 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer shadow-[2px_2px_0px_#000000] px-3 sm:px-4 text-sm sm:text-base min-w-0"
+                      type="button"
                     >
                       <span className="material-symbols-outlined text-[20px] shrink-0">lock</span>
                       <span className="truncate">Buy Now ({displayPrice})</span>
-                    </Link>
+                    </button>
                   </div>
                   <p className="text-xs text-center text-on-surface-variant">
                     Your money is held in escrow until you confirm delivery.
@@ -443,13 +487,14 @@ export default function BuyerProductPage() {
               <span className="truncate">Make Offer</span>
             </button>
 
-            <Link
-              to={`/escrow/order-${product?.id || "4821"}`}
+            <button
+              onClick={handleBuyNow}
               className="flex-1 h-12 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform shadow-md text-xs sm:text-sm px-2 min-w-0"
+              type="button"
             >
               <span className="material-symbols-outlined text-[18px] shrink-0">lock</span>
               <span className="truncate">Buy Now ({displayPrice})</span>
-            </Link>
+            </button>
           </div>
         )}
       </div>

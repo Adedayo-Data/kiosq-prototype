@@ -64,8 +64,38 @@ public class KiosqController {
 
     // 7. Create Escrow Order & Issue 4-Digit Delivery PIN
     @PostMapping("/escrow/orders")
-    public ResponseEntity<EscrowOrder> createEscrowOrder(@RequestBody CreateEscrowOrderRequest req) {
+    public ResponseEntity<Map<String, Object>> createEscrowOrder(@RequestBody CreateEscrowOrderRequest req) {
         return ResponseEntity.ok(kiosqService.createEscrowOrder(req));
+    }
+
+    // 7b. Get Single Escrow Order by Reference (Public tracking & details)
+    @GetMapping("/escrow/orders/{orderReference}")
+    public ResponseEntity<Map<String, Object>> getEscrowOrder(@PathVariable String orderReference) {
+        return ResponseEntity.ok(kiosqService.getEscrowOrder(orderReference));
+    }
+
+    // 7c. Get Authenticated Merchant's Orders
+    @GetMapping("/merchant/orders")
+    public ResponseEntity<List<Map<String, Object>>> getMerchantOrders() {
+        return ResponseEntity.ok(kiosqService.getMerchantOrders());
+    }
+
+    // 7d. Merchant Dispatch Order
+    @PostMapping("/escrow/orders/{orderReference}/dispatch")
+    public ResponseEntity<Map<String, Object>> dispatchOrder(
+            @PathVariable String orderReference,
+            @RequestBody DispatchOrderRequest req
+    ) {
+        return ResponseEntity.ok(kiosqService.dispatchOrder(orderReference, req));
+    }
+
+    // 7e. Buyer Dispute Freeze
+    @PostMapping("/escrow/orders/{orderReference}/dispute")
+    public ResponseEntity<Map<String, Object>> disputeOrder(
+            @PathVariable String orderReference,
+            @RequestBody DisputeOrderRequest req
+    ) {
+        return ResponseEntity.ok(kiosqService.disputeOrder(orderReference, req));
     }
 
     // 8. Doorstep Rider / Buyer 4-Digit Delivery PIN Verification

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { FALLBACK_ANKARA_IMAGE, API_BASE_URL } from "../utils/constants";
+import { initiateFlutterwavePayment } from "../utils/flutterwave";
+import { updateOrder } from "../utils/orderStorage";
 import KiosqLogo from "../components/KiosqLogo";
 
 export default function AiNegotiationChat() {
@@ -89,6 +91,42 @@ export default function AiNegotiationChat() {
     ]);
   };
 
+  const handlePayIntoEscrow = () => {
+    initiateFlutterwavePayment({
+      amount: agreedPrice,
+      itemTitle: product?.title || "Agreed Order",
+      buyerName: "Verified Buyer",
+      buyerEmail: "buyer@usekiosq.shop",
+      buyerPhone: "08012345678",
+      onSuccess: async (paymentRes) => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/v1/escrow/orders`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              productSlug: product?.slug || id || "ankara-wax",
+              agreedAmount: agreedPrice,
+              buyerName: "Verified Buyer",
+              buyerPhone: "08012345678",
+              deliveryAddress: "Customer Delivery Address, Lagos",
+              paymentTxRef: paymentRes.tx_ref,
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            updateOrder(data.orderReference, data);
+            navigate(`/escrow/${data.orderReference}`);
+          } else {
+            navigate(`/escrow/ORD-4821?price=${agreedPrice}`);
+          }
+        } catch {
+          navigate(`/escrow/ORD-4821?price=${agreedPrice}`);
+        }
+      },
+      onClose: () => {},
+    });
+  };
+
   return (
     <div className="bg-surface text-on-surface min-h-screen flex flex-col items-center">
       <main className="w-full max-w-2xl px-4 sm:px-6 py-4 flex flex-col h-[100dvh]">
@@ -137,7 +175,7 @@ export default function AiNegotiationChat() {
                 {product?.title || "Authentic Ankara Wax Print (6 Yards)"}
               </h3>
               <span className="text-body-sm text-on-surface-variant">
-                Asking: {product?.askingPrice ? `₦${Number(product.askingPrice).toLocaleString()}` : "₦28,000"} • Floor protected
+                Asking: {product?.askingPrice ? `₦${Number(product.askingPrice).toLocaleString()}` : "₦28,000"} • Verified Merchant
               </span>
             </div>
           </div>
@@ -218,7 +256,7 @@ export default function AiNegotiationChat() {
           {/* If Deal is locked, show Escrow Checkout CTA */}
           {isLocked ? (
             <button
-              onClick={() => navigate(`/escrow/order-4821?price=${agreedPrice}`)}
+              onClick={handlePayIntoEscrow}
               className="w-full h-13 rounded-full bg-primary text-on-primary text-headline-sm font-bold flex items-center justify-center gap-2 hover:bg-neutral-800 active:scale-98 transition-all cursor-pointer shadow-lg"
             >
               <span className="material-symbols-outlined text-[20px]">lock</span>

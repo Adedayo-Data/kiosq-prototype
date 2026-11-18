@@ -15,7 +15,8 @@ public class EscrowOrder {
         DISPATCHED,           // Rider on the way
         PIN_VERIFIED,         // Physical handoff confirmed by 4-digit PIN
         DELIVERED_AND_RELEASED, // Payout disbursed to seller ledger
-        DISPUTED              // Payout frozen by buyer inspection report
+        DISPUTED,             // Payout frozen by buyer inspection report
+        PIN_LOCKED            // Locked due to max failed PIN attempts
     }
 
     @Id
@@ -43,6 +44,20 @@ public class EscrowOrder {
 
     @Column(nullable = false, length = 4)
     private String deliveryPin; // 4-digit physical handoff PIN (e.g. "7429")
+
+    @Column(nullable = false)
+    private int failedPinAttempts = 0;
+
+    private String courierName;
+    private String courierPhone;
+    @Column(columnDefinition = "TEXT")
+    private String packedItemPhoto;
+
+    private String disputeReason;
+    @Column(columnDefinition = "TEXT")
+    private String disputeNote;
+
+    private String flutterwaveTxRef;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -98,6 +113,27 @@ public class EscrowOrder {
 
     public LocalDateTime getReleasedAt() { return releasedAt; }
     public void setReleasedAt(LocalDateTime releasedAt) { this.releasedAt = releasedAt; }
+
+    public int getFailedPinAttempts() { return failedPinAttempts; }
+    public void setFailedPinAttempts(int failedPinAttempts) { this.failedPinAttempts = failedPinAttempts; }
+
+    public String getCourierName() { return courierName; }
+    public void setCourierName(String courierName) { this.courierName = courierName; }
+
+    public String getCourierPhone() { return courierPhone; }
+    public void setCourierPhone(String courierPhone) { this.courierPhone = courierPhone; }
+
+    public String getPackedItemPhoto() { return packedItemPhoto; }
+    public void setPackedItemPhoto(String packedItemPhoto) { this.packedItemPhoto = packedItemPhoto; }
+
+    public String getDisputeReason() { return disputeReason; }
+    public void setDisputeReason(String disputeReason) { this.disputeReason = disputeReason; }
+
+    public String getDisputeNote() { return disputeNote; }
+    public void setDisputeNote(String disputeNote) { this.disputeNote = disputeNote; }
+
+    public String getFlutterwaveTxRef() { return flutterwaveTxRef; }
+    public void setFlutterwaveTxRef(String flutterwaveTxRef) { this.flutterwaveTxRef = flutterwaveTxRef; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { useToast } from "../context/ToastContext";
 import { getOrderById, updateOrder } from "../utils/orderStorage";
+import { API_BASE_URL } from "../utils/constants";
 
 export default function PublicHandoffPage() {
   const { orderId } = useParams();
@@ -10,14 +11,55 @@ export default function PublicHandoffPage() {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const found = getOrderById(orderId);
-    setOrder(found);
-    if (found && (found.deliveryStatus === "PIN_VERIFIED" || found.deliveryStatus === "DELIVERED_AND_RELEASED")) {
-      setIsSuccess(true);
+    let isMounted = true;
+    async function loadOrder() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/v1/escrow/orders/${orderId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setOrder(data);
+            if (data.deliveryStatus === "PIN_VERIFIED" || data.deliveryStatus === "DELIVERED_AND_RELEASED") {
+              setIsSuccess(true);
+            }
+          }
+          return;
+        }
+      } catch {
+        // network or fallback
+      }
+
+      // Fallback to local storage if API unreachable or order in local cache
+      const found = getOrderById(orderId);
+      if (isMounted) {
+        setOrder(found);
+        if (found && (found.deliveryStatus === "PIN_VERIFIED" || found.deliveryStatus === "DELIVERED_AND_RELEASED")) {
+          setIsSuccess(true);
+        }
+      }
     }
+
+    loadOrder().finally(() => {
+      if (isMounted) setIsLoading(false);
+    });
+
+    return () => { isMounted = false; };
   }, [orderId]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-surface text-on-surface min-h-screen flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-2">
+          <span className="material-symbols-outlined text-3xl animate-spin text-primary">progress_activity</span>
+          <p className="text-body-sm text-on-surface-variant font-bold">Verifying order details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!order) {
     return (
@@ -30,39 +72,67 @@ export default function PublicHandoffPage() {
     );
   }
 
-  const handleConfirmHandoff = () => {
+  const handleConfirmHandoff = async () => {
     if (!pin.trim() || pin.length !== 4) {
       setError("Please enter the complete 4-digit PIN.");
       addToast("Enter 4-digit delivery PIN.", "error", 6000);
       return;
     }
 
-    if (pin.trim() !== order.deliveryPin) {
-      setError("Incorrect PIN. Please ask the buyer to check their Kiosq screen.");
-      addToast("Invalid PIN. Physical handoff cannot be verified.", "error", 10000);
-      return;
-    }
-
-    // Advance order
-    const updatedTimeline = order.timeline.map((step) => {
-      if (step.label === "Delivered (PIN)") {
-        return { ...step, completed: true, time: "Just now", note: "Verified by delivery person at doorstep" };
-      }
-      if (step.label === "Inspection window") {
-        return { ...step, completed: true, time: "Active now", note: "24-hour buyer inspection started" };
-      }
-      return step;
-    });
-
-    updateOrder(order.id, {
-      deliveryStatus: "PIN_VERIFIED",
-      inspectionHoursLeft: 24,
-      timeline: updatedTimeline,
-    });
-
-    setIsSuccess(true);
+    setIsSubmitting(true);
     setError("");
-    addToast("🎉 Doorstep PIN verified! Delivery recorded successfully.", "success", 12000);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/riders/verify-pin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderReference: order.orderReference || orderId,
+          pin: pin.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const errMsg = data.message || "Invalid PIN. Verification rejected.";
+        setError(errMsg);
+        addToast(errMsg, "error", 8000);
+        return;
+      }
+
+      // Advance local order state
+      const updatedTimeline = order.timeline ? order.timeline.map((step) => {
+        if (step.label === "Delivered (PIN)") {
+          return { ...step, completed: true, time: "Just now", note: "Verified by delivery person at doorstep" };
+        }
+        if (step.label === "Inspection window") {
+          return { ...step, completed: true, time: "Active now", note: "24-hour buyer inspection started" };
+        }
+        return step;
+      }) : [];
+
+      updateOrder(order.id, {
+        deliveryStatus: "PIN_VERIFIED",
+        inspectionHoursLeft: 24,
+        timeline: updatedTimeline,
+      });
+
+      setIsSuccess(true);
+      setError("");
+      addToast("🎉 Doorstep PIN verified! Escrow delivery recorded successfully.", "success", 12000);
+    } catch {
+      // Local fallback check if offline
+      if (order.deliveryPin && pin.trim() === order.deliveryPin) {
+        setIsSuccess(true);
+        addToast("🎉 Doorstep PIN verified!", "success", 12000);
+      } else {
+        setError("Invalid 4-digit Delivery PIN! Check with the buyer.");
+        addToast("Invalid PIN. Physical handoff cannot be verified.", "error", 10000);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

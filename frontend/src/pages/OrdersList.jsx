@@ -1,12 +1,35 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
 import { getStoredOrders } from "../utils/orderStorage";
+import { API_BASE_URL } from "../utils/constants";
 import KiosqLogo from "../components/KiosqLogo";
 
 export default function OrdersList() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState("awaiting-pin");
-  const orders = useMemo(() => getStoredOrders(), []);
+  const [orders, setOrders] = useState(() => getStoredOrders());
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchMerchantOrders() {
+      try {
+        const token = localStorage.getItem("kiosq_token");
+        const res = await fetch(`${API_BASE_URL}/api/v1/merchant/orders`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && Array.isArray(data) && data.length > 0) {
+            setOrders(data);
+          }
+        }
+      } catch {
+        // keep local storage
+      }
+    }
+    fetchMerchantOrders();
+    return () => { isMounted = false; };
+  }, []);
 
   const awaitingPinCount = orders.filter(
     (o) => o.status === "In escrow" && o.deliveryStatus !== "DELIVERED_AND_RELEASED"

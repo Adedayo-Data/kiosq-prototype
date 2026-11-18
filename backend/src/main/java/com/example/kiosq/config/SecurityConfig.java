@@ -88,6 +88,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/negotiations/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/escrow/orders").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/escrow/orders/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/escrow/orders/*/dispute").permitAll()
 
                 // 3. Courier Doorstep PIN verification (Riders need zero login)
                 .requestMatchers(HttpMethod.POST, "/api/v1/riders/verify-pin").permitAll()
@@ -95,6 +96,8 @@ public class SecurityConfig {
                 // 4. Protected Seller Management Endpoints (Require Bearer Token)
                 .requestMatchers(HttpMethod.GET, "/api/v1/products").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/merchant/products").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/merchant/orders").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/escrow/orders/*/dispatch").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/products").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/products/**").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").authenticated()
