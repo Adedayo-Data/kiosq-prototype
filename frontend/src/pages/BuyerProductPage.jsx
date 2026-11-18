@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useToast } from "../context/ToastContext";
-import { FALLBACK_ANKARA_IMAGE, API_BASE_URL } from "../utils/constants";
+import {
+  FALLBACK_ANKARA_IMAGE,
+  FALLBACK_SNEAKERS_IMAGE,
+  FALLBACK_BAG_IMAGE,
+  API_BASE_URL,
+} from "../utils/constants";
 import { initiateFlutterwavePayment } from "../utils/flutterwave";
 import { updateOrder } from "../utils/orderStorage";
 import KiosqLogo from "../components/KiosqLogo";
@@ -23,6 +28,30 @@ export default function BuyerProductPage() {
     floorPrice: "",
     whatsappCaption: "",
   });
+
+  const [catalogProducts, setCatalogProducts] = useState([
+    {
+      id: "ankara-wax",
+      slug: "ankara-wax",
+      title: "Authentic Ankara Wax Print (6 Yards)",
+      askingPrice: 28000,
+      imageUrl: FALLBACK_ANKARA_IMAGE,
+    },
+    {
+      id: "jordan-1-dropship",
+      slug: "nike-air-jordan-1-high-og",
+      title: "Nike Air Jordan 1 High OG (Dropship)",
+      askingPrice: 65000,
+      imageUrl: FALLBACK_SNEAKERS_IMAGE,
+    },
+    {
+      id: "leather-tote",
+      slug: "handcrafted-lagos-leather-tote",
+      title: "Handcrafted Lagos Leather Tote",
+      askingPrice: 34000,
+      imageUrl: FALLBACK_BAG_IMAGE,
+    },
+  ]);
 
   useEffect(() => {
     const stored = localStorage.getItem("kiosq_merchant");
@@ -46,6 +75,16 @@ export default function BuyerProductPage() {
         })
         .catch(() => {});
     }
+
+    // Load full catalog for this merchant
+    fetch(`${API_BASE_URL}/api/v1/products`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data) && data.length > 0) {
+          setCatalogProducts(data);
+        }
+      })
+      .catch(() => {});
   }, [id]);
 
   const isOwner = Boolean(
@@ -441,6 +480,62 @@ export default function BuyerProductPage() {
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Full Seller Catalog Section */}
+          <div className="mt-12 pt-8 border-t-2 border-primary/20 flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span className="text-label-sm font-extrabold uppercase tracking-wider text-secondary flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px]">storefront</span>
+                  Seller Catalog
+                </span>
+                <h2 className="text-headline-md font-extrabold text-on-surface">
+                  More from {displayMerchant}
+                </h2>
+              </div>
+              <span className="text-body-sm text-on-surface-variant">
+                All items protected by Kiosq SafeEscrow • 4-Digit Doorstep PIN
+              </span>
+            </div>
+
+            {/* Catalog Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {catalogProducts.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-surface-container-lowest p-4 rounded-DEFAULT border-2 border-primary shadow-[4px_4px_0px_#000000] flex flex-col justify-between gap-3 hover:-translate-y-0.5 transition-transform"
+                >
+                  <div className="flex gap-3">
+                    <img
+                      src={item.imageUrl || FALLBACK_ANKARA_IMAGE}
+                      alt={item.title}
+                      className="w-20 h-20 rounded-DEFAULT object-cover border border-outline-variant shrink-0 bg-surface-container"
+                    />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-label-md font-bold text-on-surface line-clamp-2">
+                        {item.title}
+                      </span>
+                      <span className="text-headline-sm font-extrabold text-on-surface mt-1">
+                        ₦{Number(item.askingPrice).toLocaleString()}
+                      </span>
+                      <span className="text-[11px] text-secondary font-bold flex items-center gap-1 mt-0.5">
+                        <span className="material-symbols-outlined text-[14px]">shield</span>
+                        SafeEscrow
+                      </span>
+                    </div>
+                  </div>
+
+                  <Link
+                    to={`/product/${item.slug || item.id}`}
+                    className="w-full h-10 rounded-full border-2 border-primary bg-primary text-on-primary font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-neutral-800 transition-colors"
+                  >
+                    <span>View &amp; Buy Item</span>
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </Link>
+                </div>
+              ))}
             </div>
           </div>
         </div>

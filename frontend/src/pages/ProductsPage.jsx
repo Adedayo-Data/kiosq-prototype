@@ -100,13 +100,16 @@ export default function ProductsPage() {
               image: p.imageUrl || FALLBACK_ANKARA_IMAGE,
               whatsappCaption: p.whatsappCaption,
             }));
-            setProducts(mapped);
+            const custom = JSON.parse(localStorage.getItem("kiosq_custom_products") || "[]");
+            setProducts([...custom, ...mapped]);
             return;
           }
         }
-        setProducts(fallbackProducts);
+        const custom = JSON.parse(localStorage.getItem("kiosq_custom_products") || "[]");
+        setProducts([...custom, ...fallbackProducts]);
       } catch (err) {
-        setProducts(fallbackProducts);
+        const custom = JSON.parse(localStorage.getItem("kiosq_custom_products") || "[]");
+        setProducts([...custom, ...fallbackProducts]);
       } finally {
         setIsLoading(false);
       }

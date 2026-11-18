@@ -154,12 +154,14 @@ export default function AiNegotiationChat() {
               </h2>
               <span className="text-[11px] text-secondary font-bold flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
-                Ara (Rep for Mama Tola) ✨
+                Ara AI Sales Agent ✨
               </span>
             </div>
           </div>
 
-          <div className="w-9 h-9" />
+          <span className="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-extrabold uppercase tracking-wider">
+            Coming Soon
+          </span>
         </div>
 
         {/* Product Context Strip */}
@@ -220,67 +222,34 @@ export default function AiNegotiationChat() {
             </div>
           ))}
 
-          {/* Quick Counter-Offer Chips if not locked */}
-          {!isLocked && (
-            <div className="flex flex-col gap-2 pt-2">
-              <span className="text-label-sm text-on-surface-variant font-bold">
-                Quick Haggling Responses:
-              </span>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => handleAcceptOffer("24500")}
-                  className="px-3 py-1.5 rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-bold flex items-center gap-1 hover:brightness-95 cursor-pointer"
-                >
-                  <span>Accept ₦24,500</span>
-                  <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                </button>
-                <button
-                  onClick={() => setInputText("Can you do ₦23,000 and I pay right now?")}
-                  className="px-3 py-1.5 rounded-full bg-surface-container text-on-surface text-label-sm font-bold hover:bg-surface-container-high cursor-pointer"
-                >
-                  Counter with ₦23,000
-                </button>
-                <button
-                  onClick={() => setInputText("What if I buy 2 bundles?")}
-                  className="px-3 py-1.5 rounded-full bg-surface-container text-on-surface text-label-sm font-bold hover:bg-surface-container-high cursor-pointer"
-                >
-                  Bundle discount?
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Bottom Interactive Area */}
-        <div className="pt-2 border-t border-surface-container-high shrink-0 flex flex-col gap-2">
-          {/* If Deal is locked, show Escrow Checkout CTA */}
-          {isLocked ? (
+        {/* Bottom Interactive Area: Coming Soon Announcement & Safe Escrow Checkout */}
+        <div className="pt-2 border-t border-surface-container-high shrink-0 flex flex-col gap-2.5">
+          <div className="bg-surface-container-low p-4 rounded-DEFAULT border-2 border-primary shadow-[2px_2px_0px_#000000] flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-label-md font-extrabold text-on-surface flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-secondary text-[18px]">auto_awesome</span>
+                <span>Ara Live Haggling • Coming Soon</span>
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-extrabold uppercase">
+                Prototype Preview
+              </span>
+            </div>
+            <p className="text-body-sm text-on-surface-variant">
+              Direct WhatsApp message negotiations with Ara are launching soon! For now, you can buy this verified item directly with full Escrow &amp; 4-Digit Doorstep PIN protection.
+            </p>
             <button
               onClick={handlePayIntoEscrow}
-              className="w-full h-13 rounded-full bg-primary text-on-primary text-headline-sm font-bold flex items-center justify-center gap-2 hover:bg-neutral-800 active:scale-98 transition-all cursor-pointer shadow-lg"
+              className="mt-1 w-full h-12 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center gap-2 hover:bg-neutral-800 active:scale-98 transition-all cursor-pointer shadow-[2px_2px_0px_#000000]"
             >
-              <span className="material-symbols-outlined text-[20px]">lock</span>
-              <span>Lock &amp; Pay ₦{Number(agreedPrice).toLocaleString()} into Escrow</span>
-              <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+              <span className="material-symbols-outlined text-[18px]">lock</span>
+              <span>
+                Buy with 100% Safe Escrow (₦{product?.askingPrice ? Number(product.askingPrice).toLocaleString() : "28,000"})
+              </span>
+              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
-          ) : (
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="Type your message or offer..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="flex-1 h-12 px-4 rounded-full bg-surface-container border border-outline-variant/40 text-body-md text-on-surface focus:outline-primary"
-              />
-              <button
-                onClick={handleSendMessage}
-                className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-neutral-800 cursor-pointer shrink-0 shadow-xs"
-              >
-                <span className="material-symbols-outlined text-[20px]">send</span>
-              </button>
-            </div>
-          )}
+          </div>
         </div>
       </main>
     </div>

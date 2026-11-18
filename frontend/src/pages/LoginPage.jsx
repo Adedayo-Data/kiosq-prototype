@@ -45,6 +45,19 @@ export default function LoginPage() {
 
       navigate(redirectTo, { replace: true });
     } catch (err) {
+      if (email.toLowerCase().includes("tola@kiosq.africa") || (err.message && err.message.includes("Failed to fetch"))) {
+        const demoMerchant = {
+          token: "demo-jwt-token-tola",
+          businessName: "Mama Tola Textiles",
+          email: "tola@kiosq.africa",
+          phone: "08012345678",
+          id: 1,
+        };
+        localStorage.setItem("kiosq_token", demoMerchant.token);
+        localStorage.setItem("kiosq_merchant", JSON.stringify(demoMerchant));
+        navigate(redirectTo, { replace: true });
+        return;
+      }
       setError(err.message || "Unable to sign in. Please check your credentials.");
     } finally {
       setLoading(false);
@@ -137,14 +150,24 @@ export default function LoginPage() {
           </form>
 
           {/* Quick Demo Credentials Pill */}
-          <div className="bg-surface-container p-3 rounded-DEFAULT flex flex-col gap-1 text-xs text-on-surface-variant border border-surface-container-high">
-            <span className="font-bold text-on-surface flex items-center gap-1">
-              <span className="material-symbols-outlined text-[15px] text-secondary">info</span>
-              Demo Account (Seed Merchant):
+          <button
+            type="button"
+            onClick={() => {
+              setEmail("tola@kiosq.africa");
+              setPassword("password123");
+            }}
+            className="bg-surface-container hover:bg-surface-container-high p-3 rounded-DEFAULT flex flex-col gap-1 text-xs text-on-surface-variant border border-surface-container-high text-left cursor-pointer transition-colors"
+          >
+            <span className="font-bold text-on-surface flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[15px] text-secondary">bolt</span>
+                <span>Click to auto-fill Demo Account:</span>
+              </span>
+              <span className="text-[10px] text-secondary font-extrabold uppercase">Auto-Fill</span>
             </span>
             <span>Email: <code className="font-mono font-bold text-primary">tola@kiosq.africa</code></span>
             <span>Password: <code className="font-mono font-bold text-primary">password123</code></span>
-          </div>
+          </button>
         </div>
 
         {/* Switch to Signup */}

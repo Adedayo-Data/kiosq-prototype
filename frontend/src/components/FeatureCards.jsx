@@ -79,13 +79,12 @@ export default function FeatureCards() {
           </div>
 
           <div className="pt-2 border-t border-surface-container-high/60 flex items-center justify-between">
-            <button
-              className="text-left text-label-md text-on-surface underline underline-offset-4 flex items-center gap-1 cursor-pointer font-bold"
-              type="button"
-            >
-              Chat with Ara
-              <span className="material-symbols-outlined text-[16px]">chat</span>
-            </button>
+            <span className="text-left text-label-md text-on-surface flex items-center gap-1.5 font-bold">
+              <span>Chat with Ara</span>
+              <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-extrabold uppercase">
+                Coming Soon
+              </span>
+            </span>
           </div>
         </div>
 
